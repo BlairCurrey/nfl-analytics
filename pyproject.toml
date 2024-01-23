@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "nfl-analytics"
+version = "0.1.0"
+description = ""
+authors = ["Blair Currey <12960453+BlairCurrey@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2.0"
+ipykernel = "^6.29.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
