@@ -59,6 +59,30 @@ def load_sqlite():
     print(cursor.fetchall())
 
 
+# def build():
+#     # TODO: do all the things the dev notebook is doing. splitting into nice functions as necessary
+#     # For example, could make a function for each time in notebook we are initializing a new dataframe (just a rough guide).
+#     pass
+
+
+class Pipeline:
+    def __init__(self, debug=False):
+        self.debug = debug
+        # self.df = pd.DataFrame()
+
+    def _fetch_play_by_play(self, years=range(1999, 2024)):
+        pass
+
+    def _load(self):
+        pass
+
+    def _build(self):
+        pass
+
+    # def stuffthatbuildcalls (so I can run in the dev notebook)
+    # if debug: true, print stuff
+
+
 if __name__ == "__main__":
     get()
     load_sqlite()
