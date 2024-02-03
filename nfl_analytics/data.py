@@ -1,32 +1,65 @@
+"""
+Handles fetching and loading the play by play data. Essentially, 
+everything before tranforming it.
+"""
+
 import urllib.request
+from urllib.error import HTTPError
 import os
-import pandas as pd
 import sqlite3
 
+import pandas as pd
 
-def get():
-    years = range(1999, 2024)
+from nfl_analytics.config import DATA_DIR
 
-    save_directory = "data"
-    os.makedirs(save_directory, exist_ok=True)
+
+def download_data(years=range(1999, 2024)):
+    os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
         # year gets parsed from this filename and depends on this format
         filename = f"play_by_play_{year}.csv.gz"
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/{filename}"
-        save_path = os.path.join(save_directory, filename)
+        save_path = os.path.join(DATA_DIR, filename)
 
         print(f"Downloading {url}")
-        urllib.request.urlretrieve(url, save_path)
+
+        try:
+            urllib.request.urlretrieve(url, save_path)
+        except HTTPError as e:
+            print(
+                f"Error: Failed to download data for {year}. HTTP Error {e.code}: {e.reason}. Season for that year may not exist yet."
+            )
 
 
-def load_pandas():
+def load_dataframe():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_directory = os.path.join(script_dir, "data")
+    data_directory = os.path.join(script_dir, DATA_DIR)
 
+    if not os.path.exists(data_directory):
+        raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
+
+    files = os.listdir(data_directory)
+
+    if not files:
+        raise FileNotFoundError(f"No data files found in the data directory.")
+
+    # This wont pick on updated data (downlaoded new data but still have combined, so it will use that)
+    # # load saved combined from disk if exists
+    # combined_file_path = os.path.join(
+    #     data_directory, "combined", "play_by_play_combined.parquet.gzip"
+    # )
+    # if not skip_combined and os.path.exists(combined_file_path):
+    #     print(f"Reading combined file {combined_file_path}")
+    #     combined_df = pd.read_parquet(combined_file_path)
+    #     return combined_df
+    # else:
+    #     print("Combined file does not exist. Loading individual files.")
+
+    # make combined dataframe from individual files
     combined_df = pd.DataFrame()
 
-    for filename in os.listdir(data_directory):
+    for filename in files:
         if filename.endswith(".csv.gz"):
             print(f"Reading {filename}")
             file_path = os.path.join(data_directory, filename)
@@ -37,6 +70,9 @@ def load_pandas():
             df["year"] = year
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
+    if combined_df.empty:
+        raise FileNotFoundError("No data loaded from the files.")
+
     return combined_df
 
 
@@ -46,12 +82,14 @@ def get_year_from_filename(filename):
 
 
 def load_sqlite():
+    db_dir = "/tmp/nfl-analytics.db"
     # load into pandas first and use to_sql to infer datatypes
-    df = load_pandas()
+    df = load_dataframe()
+
+    print(f"Loading into SQLite database: {db_dir}")
 
     table_name = "plays"
-    db_conn = sqlite3.connect(database="/tmp/nfl-analytics.db")
-    # TODO: remove drop table after developing?
+    db_conn = sqlite3.connect(database=db_dir)
     db_conn.execute(f"DROP TABLE IF EXISTS {table_name}")
     df.to_sql(table_name, db_conn, index=False)
 
@@ -59,30 +97,6 @@ def load_sqlite():
     print(cursor.fetchall())
 
 
-# def build():
-#     # TODO: do all the things the dev notebook is doing. splitting into nice functions as necessary
-#     # For example, could make a function for each time in notebook we are initializing a new dataframe (just a rough guide).
-#     pass
-
-
-class Pipeline:
-    def __init__(self, debug=False):
-        self.debug = debug
-        # self.df = pd.DataFrame()
-
-    def _fetch_play_by_play(self, years=range(1999, 2024)):
-        pass
-
-    def _load(self):
-        pass
-
-    def _build(self):
-        pass
-
-    # def stuffthatbuildcalls (so I can run in the dev notebook)
-    # if debug: true, print stuff
-
-
 if __name__ == "__main__":
-    get()
+    download_data()
     load_sqlite()

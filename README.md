@@ -56,6 +56,7 @@ Then I would train the model on all the games I can on a game-by-game basis. So 
   - could be useful for comparing the accuracy of my model. in particular "Distribution of the deviation of the final margin of victory from the Vegas spread"
   - for example, perhaps avg spread difference between vegas and reality is ~10 so a model with an average difference of 8 would be good
 - a concise little overview on features from a datascience.exchange comment about predicting matches (NOTE: not spread): https://datascience.stackexchange.com/questions/102827/how-to-predict-the-winner-of-a-future-sports-match
+- article on when you need to scale data for ml: https://www.baeldung.com/cs/normalization-vs-standardization
 
 # TODO:
 
@@ -89,6 +90,18 @@ score differential is wrong? look at first game. the number for the 2 teams dont
     - gradient boosting (better with non-linear)?
   - [x] some sort of basic analysis to see how it performed. including manually comparing to vegas spread (maybe I can find an average difference? https://www.theonlycolors.com/2020/9/29/21492301/vegas-always-knows-a-mathematical-deep-dive)
     - 9-10 pt avg difference (?). normaly distrubution means ~68% will be within 1 std deviation (identified as 14-15). could be a little lower because 1,2, etc. are within 14-15, but could be higher because ~32% will be more than 14-15.
+- [x] add function to create matchups from 2 teams so we can predict next week's games.
+  - using the running_avg df to merge, similar to how we're merging the game_id to get the final training df
+  - in practice the merged records should share a week but in theory they could be different (week 12 detroit vs. week 6 ravens etc.).
+- [x] cli
+  - [x] download data
+  - [x] train model
+    - what to do with it? save configuration then recreate it when needed? pickle?
+  - [x] predict spread
+- [ ] github workflow
+  - [ ] periodically update the data (and release?)
+  - [ ] periodically train the model (and release? what? the configuration... as what filetype? json?)
+  - [ ] periodically get upcoming games and make predictions. publish on github pages. get booky spread too?
 - [ ] improve features/model. either at game aggregation level or team @ week aggregation level
   - [ ] W/L record or games played and win pct? (win and loss column on game aggregation)
   - [ ] success rate (calculate success (0 or 1) from each play).
@@ -97,9 +110,11 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [x] total points scored/allowed
   - [ ] maybe dont use first ~3 games? small sample size but dont want to throw out too much data.
   - [ ] games played (could be used as confidence in record/stats)
-- [x] add function to create matchups from 2 teams so we can predict next week's games.
-  - using the running_avg df to merge, similar to how we're merging the game_id to get the final training df
-  - in practice the merged records should share a week but in theory they could be different (week 12 detroit vs. week 6 ravens etc.).
+- [ ] rethink exposing build_running_avg_dataframe, build_training_dataframe instead of doing that inside train_model (with side effect of saving the build_running_avg_dataframe (to disk?) somewhere).
+  - just need to see how its actually used
+  - I guess its good for development purposes? maybe just make the df arg in train_model(df) optional and build from ground up if not provided which will be used in cli/deployment but developing can pass it df? idk
+- [ ] write script that gets upcoming games and makes prediction from model.
+  - try to find a good source for the schedule (nflfastR for that too maybe?).
 
 # Current status:
 
@@ -122,6 +137,29 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - Crazy idea: After implmeneting, go back and use this as a feature on the spread. Classify each games as (normal,outperform,underperform) and use that as a feature to train with. Perhaps this will be useful even if the accuracy is somewhat low?
 
 # Stray thoughts:
+
+- model name idea: caliper. (like measuring the "spread")
+- save model by pickeling with joblib/dump or save the configuration like:
+
+```python
+ # Save essential components (assumes linreg - does it work the same for others?)
+ coefficients = model.coef_
+ intercept = model.intercept_
+ # assumes using minmaxscaler (but maybe im not)
+ scaler_params = {'min_values': scaler.min_, 'scale_values': scaler.scale_}
+
+ # Recreate the model
+ recreated_model = LinearRegression()
+ recreated_model.coef_ = coefficients
+ recreated_model.intercept_ = intercept
+
+ # Recreate the scaler
+ recreated_scaler = MinMaxScaler()
+ recreated_scaler.min_ = scaler_params['min_values']
+ recreated_scaler.scale_ = scaler_params['scale_values']
+```
+
+- I think saving the configuration is probably better if I can.
 
 - What should the model's be guess _exactly_ and what does that say about how the teams are modeled in the input? the spread consists of 2 numbers (usually the inverse of each). 1 for each team. Maybe just predict the hometeam?
   - probably need to squash 2 teams into 1 line like: home_team_pass_off, home_team_pass_def, away_team_pass_off, away_team_pass_def, etc.
