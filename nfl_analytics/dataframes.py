@@ -3,7 +3,7 @@ Builds the dataframes used for training and prediction.
 Handles everything between getting the data and training/using the model.
 """
 
-from nfl_analytics.data import load_dataframe
+from nfl_analytics.data import load_dataframe_from_raw
 import pandas as pd
 
 
@@ -67,7 +67,7 @@ def build_running_avg_dataframe(df_raw=None):
     Used to create prediction inputs and build the training dataset
     """
     if df_raw is None:
-        df_raw = load_dataframe()
+        df_raw = load_dataframe_from_raw()
 
     df_sacks = add_sack_yards(df_raw)
     # df_game is team games stats by team: week 1, DET, 250 pass, 120 run, etc.

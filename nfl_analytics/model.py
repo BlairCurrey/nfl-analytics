@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
-from joblib import dump, load
+from joblib import dump
 
 from nfl_analytics.config import FEATURES, ASSET_DIR
 
@@ -51,23 +51,18 @@ def train_model(df_training):
     return model, scaler
 
 
-def save_model_and_scaler(model, scaler):
+def save_model_and_scaler(model, scaler, timestamp):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     asset_dir = os.path.join(script_dir, ASSET_DIR)
     os.makedirs(asset_dir, exist_ok=True)
 
-    dump(model, os.path.join(asset_dir, "trained_model.joblib"))
-    dump(scaler, os.path.join(asset_dir, "trained_scaler.joblib"))
-    print("Model and scaler saved")
+    model_filename = f"trained_model-{timestamp}.joblib"
+    scaler_filename = f"trained_scaler-{timestamp}.joblib"
 
-
-def load_model_and_scaler():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    asset_dir = os.path.join(script_dir, ASSET_DIR)
-
-    model = load(os.path.join(asset_dir, "trained_model.joblib"))
-    scaler = load(os.path.join(asset_dir, "trained_scaler.joblib"))
-    return model, scaler
+    dump(model, os.path.join(asset_dir, model_filename))
+    dump(scaler, os.path.join(asset_dir, scaler_filename))
+    print(f"Model saved to {model_filename}")
+    print(f"Scaler saved to {scaler_filename}")
 
 
 def predict(model, scaler, df_running_avg, home_team, away_team):

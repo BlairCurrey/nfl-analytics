@@ -1,19 +1,30 @@
 import argparse
 import time
 
-from nfl_analytics.data import download_data, load_dataframe
+import pandas as pd
+from joblib import load
+
+from nfl_analytics.data import (
+    download_data,
+    load_dataframe_from_raw,
+    save_dataframe,
+)
 from nfl_analytics.model import (
     train_model,
     predict,
     save_model_and_scaler,
-    load_model_and_scaler,
 )
 from nfl_analytics.dataframes import (
     build_running_avg_dataframe,
     build_training_dataframe,
 )
-from nfl_analytics.utils import is_valid_year
-from nfl_analytics.config import TEAMS
+from nfl_analytics.utils import is_valid_year, get_latest_timestamped_filepath
+from nfl_analytics.config import (
+    TEAMS,
+    RUNNING_AVG_DF_FILENAME,
+    TRAINED_MODEL_FILENAME,
+    TRAINED_SCALER_FILENAME,
+)
 
 
 # ROUGH CLI docs:
@@ -50,21 +61,23 @@ def main():
             invalid_years = [year for year in year_set if not is_valid_year(year)]
 
             if invalid_years:
-                print(
-                    f"Error: Invalid year(s) provided: {invalid_years}. No data downloaded."
-                )
+                print(f"Invalid year(s) provided: {invalid_years}. No data downloaded.")
             else:
                 download_data(year_set)
         else:
             download_data()
 
     if args.train:
-        print("Training model...")
-
         start_time = time.time()
-        df_raw = load_dataframe()
+        try:
+            df_raw = load_dataframe_from_raw()
+        except FileNotFoundError:
+            print("No data loaded from the files. Please run with --download first.")
+            return
         end_time = time.time()
         print(f"Loaded dataframe in {end_time - start_time} seconds")
+
+        print("Training model...")
 
         # This wont pick on updated data (downlaoded new data but still have combined, so it will use that)
         # Save combined dataframe to disk
@@ -73,16 +86,20 @@ def main():
         # save_path = os.path.join(save_dir, "play_by_play_combined.parquet.gzip")
         # df_raw.to_parquet(save_path, compression="gzip")
 
+        timestamp = int(time.time())
+
         df_running_avg = build_running_avg_dataframe(df_raw)
+        save_dataframe(df_running_avg, f"{RUNNING_AVG_DF_FILENAME}-{timestamp}")
+
         df_training = build_training_dataframe(df_running_avg)
         model, scaler = train_model(df_training)
 
-        save_model_and_scaler(model, scaler)
+        save_model_and_scaler(model, scaler, timestamp)
 
     if args.predict:
         # TODO: this will silently predict based off old data if thats all we have.
         # Perhaps I should require the week/year in the predict fn? Or at least log
-        # year/week in predict?
+        # year/week in predict? Or maybe aligning everything by timestamp will resolve this?
         home_team = args.predict[0].upper()
         away_team = args.predict[1].upper()
 
@@ -92,13 +109,31 @@ def main():
                 return
 
         if home_team == away_team:
-            print("Error: Home and away team cannot be the same.")
+            print("Home and away team cannot be the same.")
             return
 
-        model, scaler = load_model_and_scaler()
+        try:
+            latest_model_filepath = get_latest_timestamped_filepath(
+                TRAINED_MODEL_FILENAME, ".joblib"
+            )
+            latest_scaler_filepath = get_latest_timestamped_filepath(
+                TRAINED_SCALER_FILENAME, ".joblib"
+            )
+        except FileNotFoundError:
+            print(
+                "No trained model and/or scaler found. Please run with --train first."
+            )
+            return
+        model, scaler = load(latest_model_filepath), load(latest_scaler_filepath)
 
-        # TODO: load directly from somewhere instead?
-        df_running_avg = build_running_avg_dataframe()
+        try:
+            latest_running_avg_filename = get_latest_timestamped_filepath(
+                RUNNING_AVG_DF_FILENAME, ".csv.gz"
+            )
+        except FileNotFoundError:
+            print("No running average dataframe found. Please run with --train first.")
+            return
+        df_running_avg = pd.read_csv(latest_running_avg_filename, low_memory=False)
 
         predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
 

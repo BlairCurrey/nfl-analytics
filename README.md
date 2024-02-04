@@ -80,9 +80,9 @@ Then I would train the model on all the games I can on a game-by-game basis. So 
 
 score differential is wrong? look at first game. the number for the 2 teams dont match
 
-- [ ] cleanup
-  - [ ] the get_data and load_data is duplicated in data.py and get_data.py/load_data.py. just use one or the other.
-  - [ ] move notebook code to python files. think about a managable way to share logic between notebook and python files so I can drop into the pipeline and inspect as needed.
+- [x] cleanup
+  - [x] the get_data and load_data is duplicated in data.py and get_data.py/load_data.py. just use one or the other.
+  - [x] move notebook code to python files. think about a managable way to share logic between notebook and python files so I can drop into the pipeline and inspect as needed.
     - probably just put everything in a functions that are imported into the python file and notebook?
 - [x] simple model to predict spread
   - [x] use sklearn to train model
@@ -99,9 +99,14 @@ score differential is wrong? look at first game. the number for the 2 teams dont
     - what to do with it? save configuration then recreate it when needed? pickle?
   - [x] predict spread
 - [ ] github workflow
-  - [ ] periodically update the data (and release?)
-  - [ ] periodically train the model (and release? what? the configuration... as what filetype? json?)
+  - [ ] periodically train the model (and release model, scaler, running_avg_dfall w/ same timestamp)
+    - [ ] add save functionality to --train flag that saves the running_avg_df to assets
+    - [ ] update predict fn to only predict from this saved df. should ensure its always using latest data that model was trained with (instead of using new data model wasnt trained with when building from csv).
   - [ ] periodically get upcoming games and make predictions. publish on github pages. get booky spread too?
+- Quality of Life Improvements
+  - [ ] add cli doc generator. look into `argparse.HelpFormatter` to generate a markdown file.
+  - [ ] add types
+  - [ ] unit tests
 - [ ] improve features/model. either at game aggregation level or team @ week aggregation level
   - [ ] W/L record or games played and win pct? (win and loss column on game aggregation)
   - [ ] success rate (calculate success (0 or 1) from each play).

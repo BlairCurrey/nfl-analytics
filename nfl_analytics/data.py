@@ -10,7 +10,14 @@ import sqlite3
 
 import pandas as pd
 
-from nfl_analytics.config import DATA_DIR
+from nfl_analytics.config import (
+    DATA_DIR,
+    ASSET_DIR as ASSET_DIR_,
+)
+
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
@@ -32,9 +39,8 @@ def download_data(years=range(1999, 2024)):
             )
 
 
-def load_dataframe():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_directory = os.path.join(script_dir, DATA_DIR)
+def load_dataframe_from_raw():
+    data_directory = os.path.join(THIS_DIR, DATA_DIR)
 
     if not os.path.exists(data_directory):
         raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
@@ -65,6 +71,7 @@ def load_dataframe():
             file_path = os.path.join(data_directory, filename)
 
             df = pd.read_csv(file_path, compression="gzip", low_memory=False)
+
             # Save year from filename on dataframe
             year = get_year_from_filename(filename)
             df["year"] = year
@@ -84,7 +91,7 @@ def get_year_from_filename(filename):
 def load_sqlite():
     db_dir = "/tmp/nfl-analytics.db"
     # load into pandas first and use to_sql to infer datatypes
-    df = load_dataframe()
+    df = load_dataframe_from_raw()
 
     print(f"Loading into SQLite database: {db_dir}")
 
@@ -95,6 +102,15 @@ def load_sqlite():
 
     cursor = db_conn.execute(f"SELECT * from {table_name} LIMIT 10")
     print(cursor.fetchall())
+
+
+def save_dataframe(df, filename_):
+    os.makedirs(ASSET_DIR, exist_ok=True)
+    filename = f"{filename_}.csv.gz"
+
+    save_path = os.path.join(ASSET_DIR, filename)
+    df.to_csv(save_path, index=False, compression="gzip")
+    print(f"Running average dataframe saved to {filename}")
 
 
 if __name__ == "__main__":
