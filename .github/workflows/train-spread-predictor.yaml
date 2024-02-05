@@ -1,4 +1,4 @@
-name: NFL Analytics Pipeline
+name: NFL Spread Predictor Pipeline
 
 on:
   # schedule:
@@ -18,13 +18,10 @@ jobs:
         with:
           python-version: 3.12
 
-      # TODO: install in virtual env? https://python-poetry.org/docs/#ci-recommendations
-      # TODO: pin version? https://python-poetry.org/docs/#ci-recommendations
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          source $HOME/.poetry/env
-          poetry --version
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
 
       - name: Install dependencies with Poetry
         run: poetry install
