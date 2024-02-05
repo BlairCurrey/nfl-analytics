@@ -36,7 +36,6 @@ jobs:
         with:
           files: ./nfl_analytics/assets/*
         env:
-          # TODO: what do i need to do for this? probably generate something on gh?
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload model, scaler, and running average dataframe
