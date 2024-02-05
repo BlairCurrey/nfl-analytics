@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Debug: Print current working directory
+        run: echo "Current working directory: $(pwd)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,7 +30,9 @@ jobs:
         run: poetry install
 
       - name: Run Python script
-        run: poetry run python main.py --download --train
+        run: |
+          cd $GITHUB_WORKSPACE
+          poetry run python main.py --download --train
 
       # TODO: tag name? release name?
       - name: Create release
