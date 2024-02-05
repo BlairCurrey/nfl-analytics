@@ -1,0 +1,58 @@
+name: NFL Analytics Pipeline
+
+on:
+  # schedule:
+  #   - cron: '0 0 * * 2'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      # TODO: install in virtual env? https://python-poetry.org/docs/#ci-recommendations
+      # TODO: pin version? https://python-poetry.org/docs/#ci-recommendations
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          source $HOME/.poetry/env
+          poetry --version
+
+      - name: Install dependencies with Poetry
+        run: poetry install
+
+      - name: Run Python script
+        run: poetry run python main.py --download --train
+
+      # TODO: tag name? release name?
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./nfl_analytics/assets/*
+        env:
+          # TODO: what do i need to do for this? probably generate something on gh?
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload model, scaler, and running average dataframe
+        id: upload_assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets
+          path: ./nfl_analytics/assets/*
+
+      - name: Attach assets to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ needs.upload_assets.outputs.artifact_paths }}
+          asset_name: assets
+          asset_content_type: application/zip
