@@ -48,7 +48,6 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{year}.csv.gz"
         print(f"Reading from remote: {url}")
         df = pd.read_csv(url, low_memory=False)
-        # df = pd.read_csv(url, low_memory=True)
 
         # Save year on dataframe
         df["year"] = year
@@ -89,8 +88,13 @@ def load_dataframe_from_raw():
             print(f"Reading {filename}")
             file_path = os.path.join(DATA_DIR, filename)
 
-            # df = pd.read_csv(file_path, compression="gzip", low_memory=False)
-            df = pd.read_csv(file_path, compression="gzip", low_memory=True)
+            # TODO: Throws DtypeWarning about mixed types and says "Specify dtype option on import or set low_memory=False.""
+            # However, model training results are unchanged and this is required to run
+            # in gh actions without timing out. Perhaps an alternative solution to gh actions
+            # timeing out would enable using low_memory=False. Like: https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
+            # Or maybe using chunksize and iterator? https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
+            df = pd.read_csv(file_path, compression="gzip", low_memory=False)
+            # df = pd.read_csv(file_path, compression="gzip", low_memory=True)
 
             # Save year from filename on dataframe
             year = get_year_from_filename(filename)

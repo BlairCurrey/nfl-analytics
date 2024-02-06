@@ -29,6 +29,18 @@ jobs:
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
 
+      - name: Show swap
+        run: df -h
+
+      - name: Increase swapfile
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show
+
       # TODO: should be able to combine w/ main.py --download
       - name: Train Model
         run: poetry run python ./nfl_analytics/main.py --train
