@@ -11,13 +11,14 @@ import sqlite3
 import pandas as pd
 
 from nfl_analytics.config import (
-    DATA_DIR,
+    DATA_DIR as DATA_DIR_,
     ASSET_DIR as ASSET_DIR_,
 )
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
+DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
