@@ -22,6 +22,9 @@ DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
+    print(THIS_DIR)
+    print(DATA_DIR)
+    DATA_DIR = DATA_DIR_
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
@@ -30,7 +33,7 @@ def download_data(years=range(1999, 2024)):
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/{filename}"
         save_path = os.path.join(DATA_DIR, filename)
 
-        print(f"Downloading {url}")
+        print(f"Downloading {url} to {save_path}...")
 
         try:
             urllib.request.urlretrieve(url, save_path)
