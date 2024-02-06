@@ -12,20 +12,22 @@ from pathlib import Path
 import pandas as pd
 
 from nfl_analytics.config import (
-    DATA_DIR,
+    DATA_DIR as DATA_DIR_,
     ASSET_DIR as ASSET_DIR_,
 )
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
-# DATA_DIR_TEST = os.path.join(THIS_DIR, DATA_DIR)
+DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
     # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
     # print("ASSET_DIR debug: ", ASSET_DIR)
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    # data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    # os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
     # os.makedirs(data_directory, exist_ok=True)
 
     # this_dir = Path(__file__).resolve().parent
@@ -36,7 +38,8 @@ def download_data(years=range(1999, 2024)):
         # year gets parsed from this filename and depends on this format
         filename = f"play_by_play_{year}.csv.gz"
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/{filename}"
-        save_path = os.path.join(data_directory, filename)
+        # save_path = os.path.join(data_directory, filename)
+        save_path = os.path.join(DATA_DIR, filename)
 
         print(f"Downloading {url} to {save_path}...")
 
@@ -67,12 +70,12 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
 
 
 def load_dataframe_from_raw():
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    # data_directory = os.path.join(THIS_DIR, DATA_DIR) # was used in place of DATA_DIR below
 
-    if not os.path.exists(data_directory):
-        raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
+    if not os.path.exists(DATA_DIR):
+        raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
 
-    files = os.listdir(data_directory)
+    files = os.listdir(DATA_DIR)
 
     if not files:
         raise FileNotFoundError(f"No data files found in the data directory.")
@@ -95,7 +98,7 @@ def load_dataframe_from_raw():
     for filename in files:
         if filename.endswith(".csv.gz"):
             print(f"Reading {filename}")
-            file_path = os.path.join(data_directory, filename)
+            file_path = os.path.join(DATA_DIR, filename)
 
             df = pd.read_csv(file_path, compression="gzip", low_memory=False)
 

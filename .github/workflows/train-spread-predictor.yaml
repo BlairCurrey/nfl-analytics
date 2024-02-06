@@ -27,12 +27,7 @@ jobs:
         run: poetry install
 
       - name: Download data
-        # TODO: mkdir should not be necessary but gh action hangs when doing os.makedirs
-        run: |
-          mkdir ./nfl_analytics/data
-          ls -a
-          ls -a ./nfl_analytics
-          poetry run python ./nfl_analytics/main.py --download
+        run: poetry run python ./nfl_analytics/main.py --download
 
       # TODO: should be able to combine w/ main.py --download
       - name: Train Model
