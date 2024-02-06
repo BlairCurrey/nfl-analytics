@@ -30,11 +30,7 @@ jobs:
         run: poetry install
 
       - name: Download data and train model
-        run: |
-          ls -a
-          cd $GITHUB_WORKSPACE
-          ls -a
-          poetry run python ./nfl_analytics/main.py --download --train
+        run: poetry run python ./nfl_analytics/main.py --download --train
 
       # TODO: tag name? release name?
       - name: Create release
