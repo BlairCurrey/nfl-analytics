@@ -41,12 +41,10 @@ def download_data(years=range(1999, 2024)):
 
 
 def load_dataframe_from_raw():
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    if not os.path.exists(DATA_DIR):
+        raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
 
-    if not os.path.exists(data_directory):
-        raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
-
-    files = os.listdir(data_directory)
+    files = os.listdir(DATA_DIR)
 
     if not files:
         raise FileNotFoundError(f"No data files found in the data directory.")
@@ -69,7 +67,7 @@ def load_dataframe_from_raw():
     for filename in files:
         if filename.endswith(".csv.gz"):
             print(f"Reading {filename}")
-            file_path = os.path.join(data_directory, filename)
+            file_path = os.path.join(DATA_DIR, filename)
 
             df = pd.read_csv(file_path, compression="gzip", low_memory=False)
 
