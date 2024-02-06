@@ -23,7 +23,7 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 
 def download_data(years=range(1999, 2024)):
     # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
-    print("ASSET_DIR debug: ", ASSET_DIR)
+    # print("ASSET_DIR debug: ", ASSET_DIR)
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
@@ -61,7 +61,7 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
 
 
 def load_dataframe_from_raw():
-    data_directory = DATA_DIR  # os.path.join(THIS_DIR, DATA_DIR)
+    data_directory = os.path.join(THIS_DIR, DATA_DIR)
 
     if not os.path.exists(data_directory):
         raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
