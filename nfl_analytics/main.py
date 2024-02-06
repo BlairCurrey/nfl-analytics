@@ -71,8 +71,8 @@ def main():
     if args.train:
         start_time = time.time()
         try:
-            # df_raw = load_dataframe_from_raw()
-            df_raw = load_dataframe_from_remote()
+            df_raw = load_dataframe_from_raw()
+            # df_raw = load_dataframe_from_remote()
         except FileNotFoundError as e:
             print(f"Error loading data: {e}")
             print("Please run with --download first.")
