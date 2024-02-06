@@ -24,13 +24,14 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 def download_data(years=range(1999, 2024)):
     # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
     # print("ASSET_DIR debug: ", ASSET_DIR)
-    os.makedirs(DATA_DIR, exist_ok=True)
+    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    os.makedirs(data_directory, exist_ok=True)
 
     for year in years:
         # year gets parsed from this filename and depends on this format
         filename = f"play_by_play_{year}.csv.gz"
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/{filename}"
-        save_path = os.path.join(DATA_DIR, filename)
+        save_path = os.path.join(data_directory, filename)
 
         print(f"Downloading {url} to {save_path}...")
 
