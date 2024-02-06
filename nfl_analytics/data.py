@@ -40,6 +40,24 @@ def download_data(years=range(1999, 2024)):
             )
 
 
+def load_dataframe_from_remote(years=range(1999, 2024)):
+    combined_df = pd.DataFrame()
+
+    for year in years:
+        url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{year}.csv.gz"
+        print(f"Reading from remote: {url}")
+        df = pd.read_csv(url, low_memory=False)
+
+        # Save year on dataframe
+        df["year"] = year
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    if combined_df.empty:
+        raise FileNotFoundError("No data loaded from the remote files.")
+
+    return combined_df
+
+
 def load_dataframe_from_raw():
     if not os.path.exists(DATA_DIR):
         raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
