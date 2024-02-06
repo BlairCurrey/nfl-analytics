@@ -11,20 +11,17 @@ import sqlite3
 import pandas as pd
 
 from nfl_analytics.config import (
-    DATA_DIR as DATA_DIR_,
+    DATA_DIR,
     ASSET_DIR as ASSET_DIR_,
 )
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
-DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
+# DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
-    print(THIS_DIR)
-    print(DATA_DIR)
-    DATA_DIR = DATA_DIR_
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
@@ -62,10 +59,12 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
 
 
 def load_dataframe_from_raw():
-    if not os.path.exists(DATA_DIR):
-        raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
+    data_directory = os.path.join(THIS_DIR, DATA_DIR)
 
-    files = os.listdir(DATA_DIR)
+    if not os.path.exists(data_directory):
+        raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
+
+    files = os.listdir(data_directory)
 
     if not files:
         raise FileNotFoundError(f"No data files found in the data directory.")
@@ -88,7 +87,7 @@ def load_dataframe_from_raw():
     for filename in files:
         if filename.endswith(".csv.gz"):
             print(f"Reading {filename}")
-            file_path = os.path.join(DATA_DIR, filename)
+            file_path = os.path.join(data_directory, filename)
 
             df = pd.read_csv(file_path, compression="gzip", low_memory=False)
 
