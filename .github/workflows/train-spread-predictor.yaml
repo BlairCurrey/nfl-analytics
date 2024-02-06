@@ -29,9 +29,9 @@ jobs:
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
 
-      # - name: Show swap
-      #   run: df -h
-
+      # Necessary for train step
+      # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
+      # https://stackoverflow.com/questions/71590851/r8-is-causing-gradle-daemon-to-vanish-on-github-hosted-action-runner/76921482#76921482
       - name: Increase swapfile
         run: |
           df -h
@@ -42,16 +42,18 @@ jobs:
           sudo swapon /swapfile
           sudo swapon --show
 
-      # TODO: should be able to combine w/ main.py --download
+      # Seperated from Download data to make debugging easier
       - name: Train Model
         run: poetry run python ./nfl_analytics/main.py --train
 
       # TODO: tag name? release name?
       - name: Create release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v0.1.15
         with:
           files: ./nfl_analytics/assets/*
+          tag_name: spread-predictor
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
