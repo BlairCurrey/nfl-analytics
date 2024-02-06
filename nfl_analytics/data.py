@@ -7,6 +7,7 @@ import urllib.request
 from urllib.error import HTTPError
 import os
 import sqlite3
+from pathlib import Path
 
 import pandas as pd
 
@@ -24,8 +25,11 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 def download_data(years=range(1999, 2024)):
     # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
     # print("ASSET_DIR debug: ", ASSET_DIR)
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
-    os.makedirs(data_directory, exist_ok=True)
+    # data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    # os.makedirs(data_directory, exist_ok=True)
+    this_dir = Path(__file__).resolve().parent
+    data_directory = this_dir / DATA_DIR
+    data_directory.mkdir(parents=True, exist_ok=True)
 
     for year in years:
         # year gets parsed from this filename and depends on this format
