@@ -34,7 +34,7 @@ jobs:
           ls -a
           cd $GITHUB_WORKSPACE
           ls -a
-          poetry run python main.py --download --train
+          poetry run python ./nfl_analytics/main.py --download --train
 
       # TODO: tag name? release name?
       - name: Create release
