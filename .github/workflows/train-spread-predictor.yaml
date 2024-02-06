@@ -49,7 +49,7 @@ jobs:
       # TODO: tag name? release name?
       - name: Create release
         id: create_release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v1
         with:
           files: ./nfl_analytics/assets/*
           tag_name: spread-predictor
