@@ -71,8 +71,9 @@ def main():
         start_time = time.time()
         try:
             df_raw = load_dataframe_from_raw()
-        except FileNotFoundError:
-            print("No data loaded from the files. Please run with --download first.")
+        except FileNotFoundError as e:
+            print(f"Error loading data: {e}")
+            print("Please run with --download first.")
             return
         end_time = time.time()
         print(f"Loaded dataframe in {end_time - start_time} seconds")
