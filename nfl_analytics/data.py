@@ -25,7 +25,7 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 def download_data(years=range(1999, 2024)):
     # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
     # print("ASSET_DIR debug: ", ASSET_DIR)
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    # data_directory = os.path.join(THIS_DIR, DATA_DIR)
     # os.makedirs(data_directory, exist_ok=True)
 
     # this_dir = Path(__file__).resolve().parent
