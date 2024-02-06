@@ -7,7 +7,6 @@ import urllib.request
 from urllib.error import HTTPError
 import os
 import sqlite3
-from pathlib import Path
 
 import pandas as pd
 
@@ -23,16 +22,7 @@ DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
-    # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
-    # print("ASSET_DIR debug: ", ASSET_DIR)
-    # data_directory = os.path.join(THIS_DIR, DATA_DIR)
-    # os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
-    # os.makedirs(data_directory, exist_ok=True)
-
-    # this_dir = Path(__file__).resolve().parent
-    # data_directory = this_dir / DATA_DIR
-    # data_directory.mkdir(parents=True, exist_ok=True)
 
     for year in years:
         # year gets parsed from this filename and depends on this format
@@ -58,6 +48,7 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{year}.csv.gz"
         print(f"Reading from remote: {url}")
         df = pd.read_csv(url, low_memory=False)
+        # df = pd.read_csv(url, low_memory=True)
 
         # Save year on dataframe
         df["year"] = year
@@ -70,8 +61,6 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
 
 
 def load_dataframe_from_raw():
-    # data_directory = os.path.join(THIS_DIR, DATA_DIR) # was used in place of DATA_DIR below
-
     if not os.path.exists(DATA_DIR):
         raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
 
@@ -100,7 +89,8 @@ def load_dataframe_from_raw():
             print(f"Reading {filename}")
             file_path = os.path.join(DATA_DIR, filename)
 
-            df = pd.read_csv(file_path, compression="gzip", low_memory=False)
+            # df = pd.read_csv(file_path, compression="gzip", low_memory=False)
+            df = pd.read_csv(file_path, compression="gzip", low_memory=True)
 
             # Save year from filename on dataframe
             year = get_year_from_filename(filename)

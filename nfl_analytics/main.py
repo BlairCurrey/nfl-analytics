@@ -66,12 +66,12 @@ def main():
             else:
                 download_data(year_set)
         else:
-            print("Downloading all years...")
             download_data()
 
     if args.train:
         start_time = time.time()
         try:
+            print("Loading dataframe...")
             df_raw = load_dataframe_from_raw()
             # df_raw = load_dataframe_from_remote()
         except FileNotFoundError as e:
