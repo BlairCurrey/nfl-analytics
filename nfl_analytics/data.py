@@ -18,7 +18,7 @@ from nfl_analytics.config import (
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
-DATA_DIR_TEST = os.path.join(THIS_DIR, DATA_DIR)
+# DATA_DIR_TEST = os.path.join(THIS_DIR, DATA_DIR)
 
 
 def download_data(years=range(1999, 2024)):
