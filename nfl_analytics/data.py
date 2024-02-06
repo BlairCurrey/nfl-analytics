@@ -22,7 +22,8 @@ DATA_DIR_TEST = os.path.join(THIS_DIR, DATA_DIR)
 
 
 def download_data(years=range(1999, 2024)):
-    print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
+    # print("gh actions doesnt like os.makedirs with this: ", DATA_DIR_TEST)
+    print("ASSET_DIR debug: ", ASSET_DIR)
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
