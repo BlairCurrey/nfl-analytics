@@ -66,6 +66,7 @@ def main():
             else:
                 download_data(year_set)
         else:
+            print("Downloading all years...")
             download_data()
 
     if args.train:
