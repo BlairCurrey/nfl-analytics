@@ -98,21 +98,27 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [x] train model
     - what to do with it? save configuration then recreate it when needed? pickle?
   - [x] predict spread
-- [ ] github workflow basic
+- [x] github action pipeline basic
   - [x] setup manual run that downloads/trains/uploads artifacts
     - [x] add save functionality to --train flag that saves the running_avg_df to assets
     - [x] update predict fn to only predict from this saved df. should ensure its always using latest data that model was trained with (instead of using new data model wasnt trained with when building from csv).
-  - [ ] periodically get upcoming games and make predictions. publish on github pages. get booky spread too?
-- [ ] Github actions improvements
+- Github actions improvements
+  - [ ] remove draft status when ready?
+  - [ ] add simple static body with explanation. what this is/contains, how to consume, etc.
+  - [ ] rethink release setup. currently it publishes a new set with timestamp to one spread-predictor release. its going to accumulate a lot of stuff and the timestamps are not very easy to understand.
+    - override the same release? meh dont love that
+    - new release for each? spread-predicter-[timestamp] (w/ or w/out timestamp on files)
+  - [x] add error exits to cli util. job should fail if --download, --train etc. fails
+  - [ ] run on some schedule. end of day tuesday between season start and season end?
   - [ ] output model mean absolute error to md file and use as body of release (with any other info). have some release template.
-  - [ ] maybe release should use timestamp?
   - [0] (maybe) if there are any hardcoded paths (like asset dir?), think about how to not hardcode them.
     - punting on this one. not really important to make this configurable.
 - Quality of Life Improvements
+  - [ ] suppress pandas warnings?? "import pandas as pd"
   - [ ] add cli doc generator. look into `argparse.HelpFormatter` to generate a markdown file.
   - [ ] add types
   - [ ] unit tests
-- [ ] improve features/model. either at game aggregation level or team @ week aggregation level
+- [ ] Model improvements
   - [ ] W/L record or games played and win pct? (win and loss column on game aggregation)
   - [ ] success rate (calculate success (0 or 1) from each play).
     - could be measured from positive EPA. or 40% of yards to go on 1st, 70% on 2nd, 100% on 3rd/4th (or similar)
@@ -120,11 +126,15 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [x] total points scored/allowed
   - [ ] maybe dont use first ~3 games? small sample size but dont want to throw out too much data.
   - [ ] games played (could be used as confidence in record/stats)
-- [ ] rethink exposing build_running_avg_dataframe, build_training_dataframe instead of doing that inside train_model (with side effect of saving the build_running_avg_dataframe (to disk?) somewhere).
+- [x] rethink exposing build_running_avg_dataframe, build_training_dataframe instead of doing that inside train_model (with side effect of saving the build_running_avg_dataframe (to disk?) somewhere).
   - just need to see how its actually used
   - I guess its good for development purposes? maybe just make the df arg in train_model(df) optional and build from ground up if not provided which will be used in cli/deployment but developing can pass it df? idk
-- [ ] write script that gets upcoming games and makes prediction from model.
+  - keeping as it makes it a bit easier to develop in notebook (maybe) and its just not that important to put in the train fn. although the idea that it will always be done for training seems correct.
+- [ ] write script that gets upcoming games and makes prediction from model
   - try to find a good source for the schedule (nflfastR for that too maybe?).
+  - [ ] expose this on cli (with no predict, it gets upcoming games?)
+  - [ ] use script and some template to generate html page with predictions.
+  - [ ] make gh action that does this periodically and publishes to gh actions
 
 # Current status:
 
