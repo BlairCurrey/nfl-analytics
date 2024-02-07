@@ -56,6 +56,8 @@ def main():
     args = parser.parse_args()
 
     if args.download is not None:
+        # TODO: remove. testing ci exit code failing gh action
+        exit(1)
         if args.download:
             year_set = set(args.download)
             invalid_years = [year for year in year_set if not is_valid_year(year)]
