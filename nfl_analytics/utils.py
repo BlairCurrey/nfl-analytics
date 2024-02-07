@@ -1,7 +1,10 @@
 import datetime
 import os
 
-from nfl_analytics.config import START_YEAR, ASSET_DIR
+from nfl_analytics.config import START_YEAR, ASSET_DIR as ASSET_DIR_
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 
 
 def is_valid_year(year):

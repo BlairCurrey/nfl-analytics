@@ -128,6 +128,11 @@ def main():
                 "No trained model and/or scaler found. Please run with --train first."
             )
             return
+
+        print(
+            f"Loading model and scaler from {latest_model_filepath} and {latest_scaler_filepath}"
+        )
+
         model, scaler = load(latest_model_filepath), load(latest_scaler_filepath)
 
         try:
