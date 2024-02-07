@@ -114,6 +114,8 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [0] (maybe) if there are any hardcoded paths (like asset dir?), think about how to not hardcode them.
     - punting on this one. not really important to make this configurable.
 - Quality of Life Improvements
+  - [ ] rename model? LinRegSpreadPredictor? in the release at least, not sure if anywhere else
+    - LinReg is descriptive but is it an implementation detail. Do I want to have an DecisionTreeSpreadPredictor in the future? Or would I only have a decision tree based model if it replaced the lin reg one? Maybe thats a "wait until (if) you actually have another model" problem.
   - [ ] suppress pandas warnings?? "import pandas as pd"
   - [ ] add cli doc generator. look into `argparse.HelpFormatter` to generate a markdown file.
   - [ ] add types
