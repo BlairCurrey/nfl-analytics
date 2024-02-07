@@ -8,13 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Print current working directory
-        run: echo "$(pwd)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,33 +28,40 @@ jobs:
       - name: Install dependencies with Poetry
         run: poetry install
 
-      - name: Run Python script
-        run: |
-          ls -a
-          cd $GITHUB_WORKSPACE
-          ls -a
-          poetry run python main.py --download --train
+      - name: Download data
+        run: poetry run python ./nfl_analytics/main.py --download
 
-      # TODO: tag name? release name?
+      # Necessary for train step
+      # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
+      # https://stackoverflow.com/questions/71590851/r8-is-causing-gradle-daemon-to-vanish-on-github-hosted-action-runner/76921482#76921482
+      - name: Increase swapfile
+        run: |
+          df -h
+          sudo swapoff -a
+          sudo fallocate -l 12G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show
+
+      # Seperated from Download data to make debugging easier
+      - name: Train Model
+        run: poetry run python ./nfl_analytics/main.py --train
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: ./nfl_analytics/assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: spread-predictor
+          draft: true
+          # Changes to body here dont seem to update existing release
+          body: |
+            This release includes the trained model, scaler, and compressed CSV file needed for predictions:
 
-      - name: Upload model, scaler, and running average dataframe
-        id: upload_assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: assets
-          path: ./nfl_analytics/assets/*
+            The machine learning model saved using joblib.
+            - **trained_model-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
+            - **trained_scaler-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
+            - **running_average-[timstamp].csv.gz:** Running averages used to form matchup inputs
 
-      - name: Attach assets to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ needs.upload_assets.outputs.artifact_paths }}
-          asset_name: assets
-          asset_content_type: application/zip
+            To make predictions, use these with the main.py --predict command on asset sets with matching timestamps.

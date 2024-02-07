@@ -11,13 +11,14 @@ import sqlite3
 import pandas as pd
 
 from nfl_analytics.config import (
-    DATA_DIR,
+    DATA_DIR as DATA_DIR_,
     ASSET_DIR as ASSET_DIR_,
 )
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
+DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
 def download_data(years=range(1999, 2024)):
@@ -27,9 +28,10 @@ def download_data(years=range(1999, 2024)):
         # year gets parsed from this filename and depends on this format
         filename = f"play_by_play_{year}.csv.gz"
         url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/{filename}"
+        # save_path = os.path.join(data_directory, filename)
         save_path = os.path.join(DATA_DIR, filename)
 
-        print(f"Downloading {url}")
+        print(f"Downloading {url} to {save_path}...")
 
         try:
             urllib.request.urlretrieve(url, save_path)
@@ -39,13 +41,29 @@ def download_data(years=range(1999, 2024)):
             )
 
 
+def load_dataframe_from_remote(years=range(1999, 2024)):
+    combined_df = pd.DataFrame()
+
+    for year in years:
+        url = f"https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{year}.csv.gz"
+        print(f"Reading from remote: {url}")
+        df = pd.read_csv(url, low_memory=False)
+
+        # Save year on dataframe
+        df["year"] = year
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    if combined_df.empty:
+        raise FileNotFoundError("No data loaded from the remote files.")
+
+    return combined_df
+
+
 def load_dataframe_from_raw():
-    data_directory = os.path.join(THIS_DIR, DATA_DIR)
+    if not os.path.exists(DATA_DIR):
+        raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
 
-    if not os.path.exists(data_directory):
-        raise FileNotFoundError(f"Data directory '{data_directory}' not found.")
-
-    files = os.listdir(data_directory)
+    files = os.listdir(DATA_DIR)
 
     if not files:
         raise FileNotFoundError(f"No data files found in the data directory.")
@@ -68,8 +86,9 @@ def load_dataframe_from_raw():
     for filename in files:
         if filename.endswith(".csv.gz"):
             print(f"Reading {filename}")
-            file_path = os.path.join(data_directory, filename)
+            file_path = os.path.join(DATA_DIR, filename)
 
+            # FWIW, low_memory seems to work fine (no model performance change) but it does warn of differing column types
             df = pd.read_csv(file_path, compression="gzip", low_memory=False)
 
             # Save year from filename on dataframe

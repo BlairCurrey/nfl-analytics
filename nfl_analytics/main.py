@@ -70,10 +70,12 @@ def main():
     if args.train:
         start_time = time.time()
         try:
+            print("Loading dataframe...")
             df_raw = load_dataframe_from_raw()
-        except FileNotFoundError:
-            print("No data loaded from the files. Please run with --download first.")
-            return
+        except FileNotFoundError as e:
+            print(f"Error loading data: {e}")
+            print("Please run with --download first.")
+            exit(1)
         end_time = time.time()
         print(f"Loaded dataframe in {end_time - start_time} seconds")
 
@@ -106,11 +108,11 @@ def main():
         for team in [home_team, away_team]:
             if team not in TEAMS:
                 print(f"Invalid team: {team}")
-                return
+                exit(1)
 
         if home_team == away_team:
             print("Home and away team cannot be the same.")
-            return
+            exit(1)
 
         try:
             latest_model_filepath = get_latest_timestamped_filepath(
@@ -123,7 +125,12 @@ def main():
             print(
                 "No trained model and/or scaler found. Please run with --train first."
             )
-            return
+            exit(1)
+
+        print(
+            f"Loading model and scaler from {latest_model_filepath} and {latest_scaler_filepath}"
+        )
+
         model, scaler = load(latest_model_filepath), load(latest_scaler_filepath)
 
         try:
@@ -132,7 +139,7 @@ def main():
             )
         except FileNotFoundError:
             print("No running average dataframe found. Please run with --train first.")
-            return
+            exit(1)
         df_running_avg = pd.read_csv(latest_running_avg_filename, low_memory=False)
 
         predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
