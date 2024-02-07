@@ -98,15 +98,16 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [x] train model
     - what to do with it? save configuration then recreate it when needed? pickle?
   - [x] predict spread
-- [ ] github workflow
-  - [ ] periodically train the model (and release model, scaler, running_avg_dfall w/ same timestamp)
+- [ ] github workflow basic
+  - [x] setup manual run that downloads/trains/uploads artifacts
     - [x] add save functionality to --train flag that saves the running_avg_df to assets
     - [x] update predict fn to only predict from this saved df. should ensure its always using latest data that model was trained with (instead of using new data model wasnt trained with when building from csv).
   - [ ] periodically get upcoming games and make predictions. publish on github pages. get booky spread too?
-- [ ] Github actions cleanup
+- [ ] Github actions improvements
   - [ ] output model mean absolute error to md file and use as body of release (with any other info). have some release template.
   - [ ] maybe release should use timestamp?
-  - [ ] (maybe) if there are any hardcoded paths (like asset dir?), think about how to not hardcode them.
+  - [0] (maybe) if there are any hardcoded paths (like asset dir?), think about how to not hardcode them.
+    - punting on this one. not really important to make this configurable.
 - Quality of Life Improvements
   - [ ] add cli doc generator. look into `argparse.HelpFormatter` to generate a markdown file.
   - [ ] add types
