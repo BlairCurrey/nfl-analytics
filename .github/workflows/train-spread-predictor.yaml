@@ -55,5 +55,12 @@ jobs:
           files: ./nfl_analytics/assets/*
           tag_name: spread-predictor
           draft: true
-        # env:
-        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            This release includes the trained model, scaler, and compressed CSV file needed for predictions:
+
+            The machine learning model saved using joblib.
+            - **trained_model-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
+            - **trained_scaler-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
+            - **running_average-[timstamp].csv.gz:** Running averages used to form matchup inputs
+
+            To make predictions, use these with the main.py --predict command on asset sets with matching timestamps.
