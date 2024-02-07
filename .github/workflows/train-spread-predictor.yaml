@@ -55,6 +55,7 @@ jobs:
           files: ./nfl_analytics/assets/*
           tag_name: spread-predictor
           draft: true
+          # Changes to body here dont seem to update existing release
           body: |
             This release includes the trained model, scaler, and compressed CSV file needed for predictions:
 

@@ -104,7 +104,7 @@ score differential is wrong? look at first game. the number for the 2 teams dont
     - [x] update predict fn to only predict from this saved df. should ensure its always using latest data that model was trained with (instead of using new data model wasnt trained with when building from csv).
 - Github actions improvements
   - [ ] remove draft status when ready?
-  - [ ] add simple static body with explanation. what this is/contains, how to consume, etc.
+  - [x] add simple static body with explanation. what this is/contains, how to consume, etc.
   - [ ] rethink release setup. currently it publishes a new set with timestamp to one spread-predictor release. its going to accumulate a lot of stuff and the timestamps are not very easy to understand.
     - override the same release? meh dont love that
     - new release for each? spread-predicter-[timestamp] (w/ or w/out timestamp on files)
