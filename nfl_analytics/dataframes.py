@@ -3,11 +3,17 @@ Builds the dataframes used for training and prediction.
 Handles everything between getting the data and training/using the model.
 """
 
-from nfl_analytics.data import load_dataframe_from_raw
+from typing import Optional
+
 import pandas as pd
+from pandas.core.groupby.generic import DataFrameGroupBy
+
+from nfl_analytics.data import load_dataframe_from_raw
 
 
-def build_training_dataframe(df_running_avg=None):
+def build_training_dataframe(
+    df_running_avg: Optional[pd.DataFrame] = None,
+) -> pd.DataFrame:
     if df_running_avg is None:
         df_running_avg = build_running_avg_dataframe()
 
@@ -61,7 +67,7 @@ def build_training_dataframe(df_running_avg=None):
     )
 
 
-def build_running_avg_dataframe(df_raw=None):
+def build_running_avg_dataframe(df_raw: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """
     Builds a dataframe with weakly running averages for each team by year.
     Used to create prediction inputs and build the training dataset
@@ -89,9 +95,11 @@ def build_running_avg_dataframe(df_raw=None):
     # Set the home_spread
     # This will be our target variable. It's the spread relative to the home team. We want this because we need to predict a single spread value (which we can then invert for the away team's spread).
     df_running_avg["home_spread"] = df_game.apply(
-        lambda row: -row["score_differential_post"]
-        if row["team"] != row["home_team"]
-        else row["score_differential_post"],
+        lambda row: (
+            -row["score_differential_post"]
+            if row["team"] != row["home_team"]
+            else row["score_differential_post"]
+        ),
         axis=1,
     )
 
@@ -137,7 +145,7 @@ def build_running_avg_dataframe(df_raw=None):
     return df_running_avg
 
 
-def add_sack_yards(df_raw):
+def add_sack_yards(df_raw: pd.DataFrame) -> pd.DataFrame:
     df = df_raw.copy()
     # Sack yards would be necessary to get accurate TEAM passing stats.
     # Team passing yards are sum(passing_yards) - sum(sack_yards)
@@ -150,7 +158,9 @@ def add_sack_yards(df_raw):
     return df
 
 
-def aggregate_game_stats(df_sacks, df_game_posteam):
+def aggregate_game_stats(
+    df_sacks: pd.DataFrame, df_game_posteam: DataFrameGroupBy
+) -> pd.DataFrame:
     # Group by game and team and combine offensive and defensive stats into single record
 
     # Separate offensive and defensive stats
@@ -189,7 +199,7 @@ def aggregate_game_stats(df_sacks, df_game_posteam):
     )
 
 
-def adjust_game_dataframe(df_game, df_game_posteam):
+def adjust_game_dataframe(df_game: pd.DataFrame, df_game_posteam: DataFrameGroupBy):
     df = df_game.copy()
 
     # Add home_team, away_team, home_score, away_score
@@ -200,15 +210,19 @@ def adjust_game_dataframe(df_game, df_game_posteam):
     )
 
     df["points_scored"] = df.apply(
-        lambda row: row["home_score"]
-        if row["posteam"] == row["home_team"]
-        else row["away_score"],
+        lambda row: (
+            row["home_score"]
+            if row["posteam"] == row["home_team"]
+            else row["away_score"]
+        ),
         axis=1,
     )
     df["points_allowed"] = df.apply(
-        lambda row: row["away_score"]
-        if row["posteam"] == row["home_team"]
-        else row["home_score"],
+        lambda row: (
+            row["away_score"]
+            if row["posteam"] == row["home_team"]
+            else row["home_score"]
+        ),
         axis=1,
     )
 

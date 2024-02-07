@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -11,7 +12,7 @@ from joblib import dump
 from nfl_analytics.config import FEATURES, ASSET_DIR
 
 
-def train_model(df_training):
+def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardScaler]:
     # Drop week 1 because is all NaN
     df_train = df_training[df_training["week"] > 1]
 
@@ -51,7 +52,9 @@ def train_model(df_training):
     return model, scaler
 
 
-def save_model_and_scaler(model, scaler, timestamp):
+def save_model_and_scaler(
+    model: LinearRegression, scaler: StandardScaler, timestamp: str
+) -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     asset_dir = os.path.join(script_dir, ASSET_DIR)
     os.makedirs(asset_dir, exist_ok=True)
@@ -65,14 +68,26 @@ def save_model_and_scaler(model, scaler, timestamp):
     print(f"Scaler saved to {scaler_filename}")
 
 
-def predict(model, scaler, df_running_avg, home_team, away_team):
+def predict(
+    model: LinearRegression,
+    scaler: StandardScaler,
+    df_running_avg: pd.DataFrame,
+    home_team: str,
+    away_team: str,
+) -> float:
     matchup = make_matchup(df_running_avg, home_team, away_team)
     matchup_input = get_matchup_input(scaler, matchup)
 
     return model.predict(matchup_input)[0]
 
 
-def make_matchup(df_running_avg, home_team, away_team, week=None, year=None):
+def make_matchup(
+    df_running_avg: pd.DataFrame,
+    home_team: str,
+    away_team: str,
+    week: int = None,
+    year: int = None,
+) -> pd.DataFrame:
     """Merge given team/week/years stats into a single row.
     To be used for predicting spreads for future games."""
 
@@ -124,7 +139,7 @@ def make_matchup(df_running_avg, home_team, away_team, week=None, year=None):
     return pd.concat([home_data, away_data], axis=1)
 
 
-def get_matchup_input(scaler, matchup):
+def get_matchup_input(scaler: StandardScaler, matchup: pd.DataFrame) -> pd.DataFrame:
     reshaped_matchup = matchup[FEATURES].values.reshape(1, -1)
     return scaler.transform(reshaped_matchup)
 

@@ -21,7 +21,7 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
-def download_data(years=range(1999, 2024)):
+def download_data(years: range = range(1999, 2024)) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
@@ -41,7 +41,7 @@ def download_data(years=range(1999, 2024)):
             )
 
 
-def load_dataframe_from_remote(years=range(1999, 2024)):
+def load_dataframe_from_remote(years: range = range(1999, 2024)) -> pd.DataFrame:
     combined_df = pd.DataFrame()
 
     for year in years:
@@ -59,7 +59,7 @@ def load_dataframe_from_remote(years=range(1999, 2024)):
     return combined_df
 
 
-def load_dataframe_from_raw():
+def load_dataframe_from_raw() -> pd.DataFrame:
     if not os.path.exists(DATA_DIR):
         raise FileNotFoundError(f"Data directory '{DATA_DIR}' not found.")
 
@@ -102,12 +102,12 @@ def load_dataframe_from_raw():
     return combined_df
 
 
-def get_year_from_filename(filename):
+def get_year_from_filename(filename: str) -> int:
     # Expects filename like play_by_play_2020.csv.gz
     return int(filename[-11:-7])
 
 
-def load_sqlite():
+def load_sqlite() -> None:
     db_dir = "/tmp/nfl-analytics.db"
     # load into pandas first and use to_sql to infer datatypes
     df = load_dataframe_from_raw()
@@ -123,7 +123,7 @@ def load_sqlite():
     print(cursor.fetchall())
 
 
-def save_dataframe(df, filename_):
+def save_dataframe(df: pd.DataFrame, filename_: str) -> None:
     os.makedirs(ASSET_DIR, exist_ok=True)
     filename = f"{filename_}.csv.gz"
 

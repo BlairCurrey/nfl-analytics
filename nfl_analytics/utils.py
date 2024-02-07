@@ -7,12 +7,12 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 
 
-def is_valid_year(year):
+def is_valid_year(year: int) -> bool:
     current_year = datetime.datetime.now().year
     return START_YEAR <= year <= current_year
 
 
-def get_latest_timestamped_filepath(starts_with, ends_with):
+def get_latest_timestamped_filepath(starts_with: str, ends_with: str) -> str:
     matching_files = [
         file
         for file in os.listdir(ASSET_DIR)
