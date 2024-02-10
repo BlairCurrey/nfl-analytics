@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, Optional, Union
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -8,6 +8,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from joblib import dump
+from scipy.sparse import spmatrix
+from numpy import ndarray
 
 from nfl_analytics.config import FEATURES, ASSET_DIR
 
@@ -85,8 +87,8 @@ def make_matchup(
     df_running_avg: pd.DataFrame,
     home_team: str,
     away_team: str,
-    week: int = None,
-    year: int = None,
+    week: Optional[int] = None,
+    year: Optional[int] = None,
 ) -> pd.DataFrame:
     """Merge given team/week/years stats into a single row.
     To be used for predicting spreads for future games."""
@@ -139,7 +141,9 @@ def make_matchup(
     return pd.concat([home_data, away_data], axis=1)
 
 
-def get_matchup_input(scaler: StandardScaler, matchup: pd.DataFrame) -> pd.DataFrame:
+def get_matchup_input(
+    scaler: StandardScaler, matchup: pd.DataFrame
+) -> Union[ndarray, spmatrix]:
     reshaped_matchup = matchup[FEATURES].values.reshape(1, -1)
     return scaler.transform(reshaped_matchup)
 
