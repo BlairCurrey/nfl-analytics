@@ -87,8 +87,13 @@ def make_matchup(
     df_running_avg: pd.DataFrame,
     home_team: str,
     away_team: str,
+<<<<<<< HEAD
     week: Optional[int] = None,
     year: Optional[int] = None,
+=======
+    week: int = None,
+    year: int = None,
+>>>>>>> main
 ) -> pd.DataFrame:
     """Merge given team/week/years stats into a single row.
     To be used for predicting spreads for future games."""
@@ -141,9 +146,13 @@ def make_matchup(
     return pd.concat([home_data, away_data], axis=1)
 
 
+<<<<<<< HEAD
 def get_matchup_input(
     scaler: StandardScaler, matchup: pd.DataFrame
 ) -> Union[ndarray, spmatrix]:
+=======
+def get_matchup_input(scaler: StandardScaler, matchup: pd.DataFrame) -> pd.DataFrame:
+>>>>>>> main
     reshaped_matchup = matchup[FEATURES].values.reshape(1, -1)
     return scaler.transform(reshaped_matchup)
 
