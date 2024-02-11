@@ -1,0 +1,217 @@
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8?lang=en&region=us",
+  "id": "8",
+  "guid": "56caffee-178d-f6f2-a076-b277486b8c32",
+  "uid": "s:20~l:28~t:8",
+  "alternateIds": { "sdr": "8811" },
+  "slug": "detroit-lions",
+  "location": "Detroit",
+  "name": "Lions",
+  "nickname": "Lions",
+  "abbreviation": "DET",
+  "displayName": "Detroit Lions",
+  "shortDisplayName": "Lions",
+  "color": "0076b6",
+  "alternateColor": "bbbbbb",
+  "isActive": true,
+  "isAllStar": false,
+  "logos": [
+    {
+      "href": "https://a.espncdn.com/i/teamlogos/nfl/500/det.png",
+      "width": 500,
+      "height": 500,
+      "alt": "",
+      "rel": ["full", "default"],
+      "lastUpdated": "2018-06-05T12:11Z"
+    },
+    {
+      "href": "https://a.espncdn.com/i/teamlogos/nfl/500-dark/det.png",
+      "width": 500,
+      "height": 500,
+      "alt": "",
+      "rel": ["full", "dark"],
+      "lastUpdated": "2018-06-05T12:11Z"
+    },
+    {
+      "href": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/det.png",
+      "width": 500,
+      "height": 500,
+      "alt": "",
+      "rel": ["full", "scoreboard"],
+      "lastUpdated": "2018-06-05T12:11Z"
+    },
+    {
+      "href": "https://a.espncdn.com/i/teamlogos/nfl/500-dark/scoreboard/det.png",
+      "width": 500,
+      "height": 500,
+      "alt": "",
+      "rel": ["full", "scoreboard", "dark"],
+      "lastUpdated": "2018-06-05T12:11Z"
+    }
+  ],
+  "record": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/8/record?lang=en&region=us"
+  },
+  "oddsRecords": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/0/teams/8/odds-records?lang=en&region=us"
+  },
+  "athletes": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/athletes?lang=en&region=us"
+  },
+  "venue": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/venues/3727?lang=en&region=us",
+    "id": "3727",
+    "fullName": "Ford Field",
+    "address": { "city": "Detroit", "state": "MI", "zipCode": "48226" },
+    "capacity": 0,
+    "grass": false,
+    "indoor": true,
+    "images": [
+      {
+        "href": "https://a.espncdn.com/i/venues/nfl/day/3727.jpg",
+        "width": 2000,
+        "height": 1125,
+        "alt": "",
+        "rel": ["full", "day"]
+      },
+      {
+        "href": "https://a.espncdn.com/i/venues/nfl/day/interior/3727.jpg",
+        "width": 2000,
+        "height": 1125,
+        "alt": "",
+        "rel": ["full", "day", "interior"]
+      }
+    ]
+  },
+  "groups": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/groups/10?lang=en&region=us"
+  },
+  "ranks": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/ranks?lang=en&region=us"
+  },
+  "statistics": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/8/statistics?lang=en&region=us"
+  },
+  "leaders": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/8/leaders?lang=en&region=us"
+  },
+  "links": [
+    {
+      "language": "en-US",
+      "rel": ["clubhouse", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/_/name/det/detroit-lions",
+      "text": "Clubhouse",
+      "shortText": "Clubhouse",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["roster", "desktop", "team"],
+      "href": "http://www.espn.com/nfl/team/roster/_/name/det/detroit-lions",
+      "text": "Roster",
+      "shortText": "Roster",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["stats", "desktop", "team"],
+      "href": "http://www.espn.com/nfl/team/stats/_/name/det/detroit-lions",
+      "text": "Statistics",
+      "shortText": "Statistics",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["schedule", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/schedule/_/name/det",
+      "text": "Schedule",
+      "shortText": "Schedule",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["photos", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/photos/_/name/det",
+      "text": "photos",
+      "shortText": "photos",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["tickets", "desktop", "team"],
+      "href": "https://www.vividseats.com/detroit-lions-tickets--sports-nfl-football/performer/238?wsUser=717",
+      "text": "Tickets",
+      "shortText": "Tickets",
+      "isExternal": true,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["draftpicks", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/draft/teams/_/name/det/detroit-lions",
+      "text": "Draft Picks",
+      "shortText": "Draft Picks",
+      "isExternal": false,
+      "isPremium": true
+    },
+    {
+      "language": "en-US",
+      "rel": ["transactions", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/transactions/_/name/det",
+      "text": "Transactions",
+      "shortText": "Transactions",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["injuries", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/injuries/_/name/det",
+      "text": "Injuries",
+      "shortText": "Injuries",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["depthchart", "desktop", "team"],
+      "href": "https://www.espn.com/nfl/team/depth/_/name/det",
+      "text": "Depth Chart",
+      "shortText": "Depth Chart",
+      "isExternal": false,
+      "isPremium": false
+    }
+  ],
+  "injuries": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/teams/8/injuries?lang=en&region=us"
+  },
+  "notes": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/teams/8/notes?lang=en&region=us"
+  },
+  "againstTheSpreadRecords": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/8/ats?lang=en&region=us"
+  },
+  "franchise": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/franchises/8?lang=en&region=us"
+  },
+  "depthCharts": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/depthcharts?lang=en&region=us"
+  },
+  "projection": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/projection?lang=en&region=us"
+  },
+  "events": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/events?lang=en&region=us"
+  },
+  "transactions": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/transactions?lang=en&region=us"
+  },
+  "coaches": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8/coaches?lang=en&region=us"
+  }
+}

@@ -1,0 +1,447 @@
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464?lang=en&region=us",
+  "id": "401547464",
+  "uid": "s:20~l:28~e:401547464",
+  "date": "2023-10-08T17:00Z",
+  "name": "Carolina Panthers at Detroit Lions",
+  "shortName": "CAR @ DET",
+  "season": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023?lang=en&region=us"
+  },
+  "seasonType": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2?lang=en&region=us"
+  },
+  "week": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks/5?lang=en&region=us"
+  },
+  "timeValid": true,
+  "competitions": [
+    {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464?lang=en&region=us",
+      "id": "401547464",
+      "guid": "7752d256-3218-3904-ba70-9cc5629f5f90",
+      "uid": "s:20~l:28~e:401547464~c:401547464",
+      "date": "2023-10-08T17:00Z",
+      "attendance": 63648,
+      "type": {
+        "id": "1",
+        "text": "Standard",
+        "abbreviation": "STD",
+        "slug": "standard",
+        "type": "standard"
+      },
+      "timeValid": true,
+      "dateValid": true,
+      "neutralSite": false,
+      "divisionCompetition": false,
+      "conferenceCompetition": false,
+      "previewAvailable": false,
+      "recapAvailable": true,
+      "boxscoreAvailable": true,
+      "lineupAvailable": false,
+      "gamecastAvailable": true,
+      "playByPlayAvailable": true,
+      "conversationAvailable": true,
+      "commentaryAvailable": false,
+      "pickcenterAvailable": true,
+      "summaryAvailable": true,
+      "liveAvailable": false,
+      "ticketsAvailable": false,
+      "shotChartAvailable": false,
+      "timeoutsAvailable": false,
+      "possessionArrowAvailable": false,
+      "onWatchESPN": false,
+      "recent": false,
+      "bracketAvailable": false,
+      "gameSource": {
+        "id": "1",
+        "description": "basic/manual",
+        "state": "basic"
+      },
+      "boxscoreSource": { "id": "2", "description": "feed", "state": "full" },
+      "playByPlaySource": { "id": "2", "description": "feed", "state": "full" },
+      "linescoreSource": {
+        "id": "1",
+        "description": "basic/manual",
+        "state": "basic"
+      },
+      "statsSource": { "id": "3", "description": "scrubbed", "state": "full" },
+      "venue": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/venues/3727?lang=en&region=us",
+        "id": "3727",
+        "fullName": "Ford Field",
+        "address": { "city": "Detroit", "state": "MI", "zipCode": "48226" },
+        "capacity": 0,
+        "grass": false,
+        "indoor": true,
+        "images": [
+          {
+            "href": "https://a.espncdn.com/i/venues/nfl/day/3727.jpg",
+            "width": 2000,
+            "height": 1125,
+            "alt": "",
+            "rel": ["full", "day"]
+          },
+          {
+            "href": "https://a.espncdn.com/i/venues/nfl/day/interior/3727.jpg",
+            "width": 2000,
+            "height": 1125,
+            "alt": "",
+            "rel": ["full", "day", "interior"]
+          }
+        ]
+      },
+      "competitors": [
+        {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8?lang=en&region=us",
+          "id": "8",
+          "uid": "s:20~l:28~t:8",
+          "type": "team",
+          "order": 0,
+          "homeAway": "home",
+          "winner": true,
+          "team": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/8?lang=en&region=us"
+          },
+          "score": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/score?lang=en&region=us"
+          },
+          "linescores": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/linescores?lang=en&region=us"
+          },
+          "roster": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/roster?lang=en&region=us"
+          },
+          "statistics": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/statistics?lang=en&region=us"
+          },
+          "leaders": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/leaders?lang=en&region=us"
+          },
+          "record": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/8/records?lang=en&region=us"
+          },
+          "previousCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547442/competitions/401547442?lang=en&region=us"
+          },
+          "nextCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547478/competitions/401547478?lang=en&region=us"
+          }
+        },
+        {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29?lang=en&region=us",
+          "id": "29",
+          "uid": "s:20~l:28~t:29",
+          "type": "team",
+          "order": 1,
+          "homeAway": "away",
+          "winner": false,
+          "team": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/29?lang=en&region=us"
+          },
+          "score": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/score?lang=en&region=us"
+          },
+          "linescores": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/linescores?lang=en&region=us"
+          },
+          "roster": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/roster?lang=en&region=us"
+          },
+          "statistics": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/statistics?lang=en&region=us"
+          },
+          "leaders": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/leaders?lang=en&region=us"
+          },
+          "record": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/competitors/29/records?lang=en&region=us"
+          },
+          "previousCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547448/competitions/401547448?lang=en&region=us"
+          },
+          "nextCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547473/competitions/401547473?lang=en&region=us"
+          }
+        }
+      ],
+      "notes": [],
+      "situation": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/situation?lang=en&region=us"
+      },
+      "status": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/status?lang=en&region=us"
+      },
+      "odds": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/odds?lang=en&region=us"
+      },
+      "broadcasts": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/broadcasts?lang=en&region=us"
+      },
+      "officials": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/officials?lang=en&region=us"
+      },
+      "details": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/plays?lang=en&region=us"
+      },
+      "leaders": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/leaders?lang=en&region=us"
+      },
+      "links": [
+        {
+          "language": "en-US",
+          "rel": ["summary", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/game/_/gameId/401547464/panthers-lions",
+          "text": "Gamecast",
+          "shortText": "Summary",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["summary", "sportscenter", "app", "event"],
+          "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+          "text": "Gamecast",
+          "shortText": "Summary",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["now", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/game/_/gameId/401547464",
+          "text": "Now",
+          "shortText": "Now",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["teamstats", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/matchup?gameId=401547464",
+          "text": "Team Stats",
+          "shortText": "Team Stats",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["boxscore", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/boxscore/_/gameId/401547464",
+          "text": "Box Score",
+          "shortText": "Box Score",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["boxscore", "sportscenter", "app", "event"],
+          "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+          "text": "Box Score",
+          "shortText": "Box Score",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["gamecast", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/gamecast/_/gameId/401547464",
+          "text": "Gamecast",
+          "shortText": "Gamecast",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["gamecast", "mobile", "event"],
+          "href": "http://m.espn.com/nfl/gamecast?gameId=401547464&action=summary",
+          "text": "Gamecast",
+          "shortText": "Gamecast",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["gamecast", "sportscenter", "app", "event"],
+          "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+          "text": "Gamecast",
+          "shortText": "Gamecast",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["recap", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/recap?gameId=401547464",
+          "text": "Recap",
+          "shortText": "Recap",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["pbp", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/playbyplay/_/gameId/401547464",
+          "text": "Play-by-Play",
+          "shortText": "Play-by-Play",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["videos", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/video?gameId=401547464",
+          "text": "Videos",
+          "shortText": "Videos",
+          "isExternal": false,
+          "isPremium": false
+        }
+      ],
+      "predictor": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/predictor?lang=en&region=us"
+      },
+      "probabilities": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/probabilities?lang=en&region=us"
+      },
+      "powerIndexes": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/powerindex?lang=en&region=us"
+      },
+      "format": {
+        "regulation": {
+          "periods": 4,
+          "displayName": "Quarter",
+          "slug": "quarter",
+          "clock": 900.0
+        },
+        "overtime": {
+          "periods": 1,
+          "displayName": "sudden-death",
+          "slug": "sudden-death",
+          "clock": 600.0
+        }
+      },
+      "drives": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547464/competitions/401547464/drives?lang=en&region=us"
+      },
+      "hasDefensiveStats": false
+    }
+  ],
+  "links": [
+    {
+      "language": "en-US",
+      "rel": ["summary", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/game/_/gameId/401547464/panthers-lions",
+      "text": "Gamecast",
+      "shortText": "Summary",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["summary", "sportscenter", "app", "event"],
+      "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+      "text": "Gamecast",
+      "shortText": "Summary",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["now", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/game/_/gameId/401547464",
+      "text": "Now",
+      "shortText": "Now",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["teamstats", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/matchup?gameId=401547464",
+      "text": "Team Stats",
+      "shortText": "Team Stats",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["boxscore", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/boxscore/_/gameId/401547464",
+      "text": "Box Score",
+      "shortText": "Box Score",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["boxscore", "sportscenter", "app", "event"],
+      "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+      "text": "Box Score",
+      "shortText": "Box Score",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["gamecast", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/gamecast/_/gameId/401547464",
+      "text": "Gamecast",
+      "shortText": "Gamecast",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["gamecast", "mobile", "event"],
+      "href": "http://m.espn.com/nfl/gamecast?gameId=401547464&action=summary",
+      "text": "Gamecast",
+      "shortText": "Gamecast",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["gamecast", "sportscenter", "app", "event"],
+      "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547464",
+      "text": "Gamecast",
+      "shortText": "Gamecast",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["recap", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/recap?gameId=401547464",
+      "text": "Recap",
+      "shortText": "Recap",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["pbp", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/playbyplay/_/gameId/401547464",
+      "text": "Play-by-Play",
+      "shortText": "Play-by-Play",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["videos", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/video?gameId=401547464",
+      "text": "Videos",
+      "shortText": "Videos",
+      "isExternal": false,
+      "isPremium": false
+    }
+  ],
+  "venues": [
+    {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/venues/3727?lang=en&region=us"
+    }
+  ],
+  "league": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl?lang=en&region=us"
+  }
+}

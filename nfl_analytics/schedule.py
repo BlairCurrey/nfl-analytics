@@ -1,34 +1,19 @@
+"""
+Handles getting the data for upcoming matchups.
+"""
+
 import json
 import urllib.request
-from enum import Enum
-from typing import Any, Dict, Tuple, Optional
-from datetime import datetime, timezone, timedelta
+from typing import Any, Dict, List
 from dataclasses import dataclass
 
 BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
 
 
-class SeasonType(Enum):
-    PRESEASON = "1"
-    REGULAR_SEASON = "2"
-    POST_SEASON = "3"
-    OFF_SEASON = "4"
-
-
 @dataclass
-class SeasonInfo:
-    year: int
-    season_type: SeasonType
-    week: Optional[str]
-
-
-def get_calendar_data() -> Dict[str, Any]:
-    blacklist_url = BASE_URL + "calendar/blacklist"
-
-    with urllib.request.urlopen(blacklist_url) as response:
-        calendar = json.load(response)
-
-    return calendar
+class Matchup:
+    home_team: str
+    away_team: str
 
 
 # TODO: how to handle when its probowl?
@@ -37,82 +22,95 @@ def get_calendar_data() -> Dict[str, Any]:
 # Not sure I simply want to skip the week in case its not its OWN week sometime.
 
 
-def get_current_season_info(calendar: Dict[str, Any]) -> SeasonInfo:
+def get_upcoming_matchups() -> List[Matchup]:
+    upcoming_event_urls = _get_upcoming_event_urls()
 
-    # Did (and probably should) match the preseason start date and postseason end date
-    calendar_start_date, calendar_end_date = get_start_and_end_date(calendar)
-    season_year = datetime.fromisoformat(calendar_start_date).year
+    matchups = []
 
-    now = datetime.now(timezone.utc).timestamp()
+    for url in upcoming_event_urls:
+        with urllib.request.urlopen(url) as response:
+            event = json.load(response)
 
-    if is_outside_date_range(calendar_start_date, calendar_end_date, now):
-        return SeasonInfo(season_year, SeasonType.OFF_SEASON, None)
+        competitions = event.get("competitions", [])
+        competitionCount = len(competitions)
 
-    # find the current season type by its top level date range
-    for season_type_section in calendar.get("sections", []):
-        section_start_date, section_end_date = get_start_and_end_date(
-            season_type_section
-        )
-
-        if is_outside_date_range(section_start_date, section_end_date, now):
-            continue
-
-        # find the current week for the found season type
-        for week in season_type_section.get("entries", []):
-            # entries should pretty much correspond to week, but may include events like probowl (in postseason)
-            week_start_date, week_end_date = get_start_and_end_date(week)
-            if is_outside_date_range(week_start_date, week_end_date, now):
-                continue
-            # TODO: Is this a normal python pattern? destructuring inside fn call to condense into 1 line
-            # if is_outside_date_range(*(get_start_and_end_date(week)), now):
-            #     continue
-            # TODO: If not destructuring, maybe I should just call get_start_and_end_date in is_outside_date_range.
-
-            return SeasonInfo(
-                season_year, SeasonType(season_type_section["value"]), week["value"]
+        if competitionCount != 1:
+            raise ValueError(
+                f"Get upcoming matchup failed. Expected 1 competition, got {competitionCount}."
             )
 
-    raise ValueError("No current season type and/or week found")
+        competitors = competitions[0].get("competitors", [])
+        home_team = None
+        away_team = None
+
+        for competitor in competitors:
+            home_away = competitor.get("homeAway")
+
+            if home_away == "home":
+                home_team = _get_team_abbreviation(competitor["team"]["$ref"])
+            elif home_away == "away":
+                away_team = _get_team_abbreviation(competitor["team"]["$ref"])
+
+        if home_team is None or away_team is None:
+            raise ValueError(
+                "Get upcoming matchup failed. Home or away team not found."
+            )
+
+        matchups.append(Matchup(home_team, away_team))
+    return matchups
 
 
-def is_outside_date_range(
-    start_date_str: str,
-    end_date_str: str,
-    timestamp: float = datetime.now(timezone.utc).timestamp(),
-) -> bool:
-    """
-    Expects date strings like: 2024-02-15T07:59Z.
-    Compares current time if none provided.
-    """
-    start_date = datetime.fromisoformat(start_date_str)
-    end_date = datetime.fromisoformat(end_date_str)
+def _get_upcoming_event_urls():
+    # Get calendar to find what the current season is
+    calendar_data = _get_calendar_data()
 
-    return timestamp < start_date.timestamp() or timestamp > end_date.timestamp()
+    # Get's the current season including the current week
+    season_url = calendar_data.get("season", {}).get("$ref")
+    if season_url is None:
+        raise ValueError("Season url not found.")
+    season_data = _get_season_data(season_url)
+
+    # Get events for the current week. The top level "type" field is the current week/season type.
+    events_url = (
+        season_data.get("type", {}).get("week", {}).get("events", {}).get("$ref")
+    )
+    if events_url is None:
+        raise ValueError("Events url not found.")
+    event_data = _get_event_data(events_url)
+
+    return [item.get("$ref") for item in event_data.get("items", [])]
 
 
-def get_start_and_end_date(json: Dict[str, Any]) -> Tuple[str, str]:
-    start_date = json.get("startDate")
-    end_date = json.get("endDate")
+def _get_team_abbreviation(team_url: str) -> str:
+    with urllib.request.urlopen(team_url) as response:
+        team = json.load(response)
 
-    if start_date is None or end_date is None:
-        raise ValueError("Start date and end date not found.")
+    return team["abbreviation"]
 
-    return start_date, end_date
+
+def _get_event_data(events_url: str) -> Dict[str, Any]:
+    with urllib.request.urlopen(events_url) as response:
+        events = json.load(response)
+
+    return events
+
+
+def _get_calendar_data() -> Dict[str, Any]:
+    blacklist_url = BASE_URL + "calendar/blacklist"
+
+    with urllib.request.urlopen(blacklist_url) as response:
+        calendar = json.load(response)
+
+    return calendar
+
+
+def _get_season_data(season_url: str) -> Dict[str, Any]:
+    with urllib.request.urlopen(season_url) as response:
+        season = json.load(response)
+
+    return season
 
 
 if __name__ == "__main__":
-    # is_outside_date_range
-    current_datetime = datetime.now(timezone.utc)
-    future_datetime = current_datetime + timedelta(
-        weeks=52 * 50
-    )  # 50 years into the future
-    future_timestamp = future_datetime.timestamp()
-
-    assert is_outside_date_range(
-        "2023-08-01T07:00Z", "2024-02-15T07:59Z", timestamp=future_timestamp
-    )
-    assert not is_outside_date_range("2023-08-01T07:00Z", "2074-02-15T07:59Z")
-
-    calendar_data = get_calendar_data()
-    current_season_info = get_current_season_info(calendar_data)
-    print(current_season_info)
+    matchups = get_upcoming_matchups()
+    print(matchups)

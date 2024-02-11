@@ -57,6 +57,7 @@ Then I would train the model on all the games I can on a game-by-game basis. So 
   - for example, perhaps avg spread difference between vegas and reality is ~10 so a model with an average difference of 8 would be good
 - a concise little overview on features from a datascience.exchange comment about predicting matches (NOTE: not spread): https://datascience.stackexchange.com/questions/102827/how-to-predict-the-winner-of-a-future-sports-match
 - article on when you need to scale data for ml: https://www.baeldung.com/cs/normalization-vs-standardization
+- some espn api documentation: https://gist.github.com/nntrn/ee26cb2a0716de0947a0a4e9a157bc1c
 
 # TODO:
 
@@ -114,11 +115,11 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [0] (maybe) if there are any hardcoded paths (like asset dir?), think about how to not hardcode them.
     - punting on this one. not really important to make this configurable.
 - Quality of Life Improvements
-  - [ ] rename model? LinRegSpreadPredictor? in the release at least, not sure if anywhere else
+  - [ ] rename model? LinRegSpreadPredictor? in the release at least, not sure if anywhere else (pipeline)
     - LinReg is descriptive but is it an implementation detail. Do I want to have an DecisionTreeSpreadPredictor in the future? Or would I only have a decision tree based model if it replaced the lin reg one? Maybe thats a "wait until (if) you actually have another model" problem.
   - [ ] suppress pandas warnings?? "import pandas as pd"
   - [ ] add cli doc generator. look into `argparse.HelpFormatter` to generate a markdown file.
-  - [ ] add types
+  - [x] add types
   - [ ] unit tests
 - [ ] Model improvements
   - [ ] W/L record or games played and win pct? (win and loss column on game aggregation)
@@ -134,9 +135,10 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - keeping as it makes it a bit easier to develop in notebook (maybe) and its just not that important to put in the train fn. although the idea that it will always be done for training seems correct.
 - [ ] write script that gets upcoming games and makes prediction from model
   - try to find a good source for the schedule (nflfastR for that too maybe?).
+  - [x] matchups from schedule (like `[{home: 'DET', away: 'CHI'}, ...]`)
   - [ ] expose this on cli (with no predict, it gets upcoming games?)
   - [ ] use script and some template to generate html page with predictions.
-  - [ ] make gh action that does this periodically and publishes to gh actions
+  - [ ] make gh action that does this periodically and publishes to gh pages
 
 # Current status:
 
@@ -304,3 +306,125 @@ Spread,Victory%
 39.0,99.7%
 39.5,99.7%
 40.0,99.8%
+
+# some potential schedule sources
+
+from: https://gist.github.com/nntrn/ee26cb2a0716de0947a0a4e9a157bc1c
+
+Main goal is to get a list of all team pairs (identified as home/away) for an upcoming game at a given point in time.
+
+## start/end date for each week for current season
+
+https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/calendar/blacklist
+
+- not exactly sure what makes it a blacklist (maybe their internal purposes). the "blacklist" appears to contains days (although not every day and probably not just game days) within the season
+- this "blacklist" contains details on the weeks for preseason, regular season, post season.
+- no team matchups, just defines the week start/end
+- for the current season only
+
+## current season details (preseason? regular? post? off?)
+
+https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023?lang=en&region=us
+
+- probably a good place to check current status of the league ("are we in season and if so is it pre/regular/post)
+- top level "type" seems to focus on the current item in "types". For example, `types.items` is an array of objects like:
+
+```json
+[
+  { "type": 1, "name": "Preseason", "startDate": "...", "endDate": "..." },
+  { "type": 2, "name": "Regular Season" },
+  { "type": 3, "name": "Postseason" },
+  { "type": 4, "name": "Off Season" }
+]
+```
+
+and `type` is the particular number where the actual date is within the start/end date. In other words, if its the off season `type` will be the offseason item.
+
+## weeks by year
+
+https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks?lang=en&region=us
+
+- gives refs for the different weeks in a given year
+
+## get "events" by week/sreason/season type
+
+https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks/18/events?lang=en&region=us
+
+- just refs. not teams mentioned
+- 1: pre, 2: reg, 3: post, 4: off
+
+## event details
+
+can be gotten from the `v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks/18/events` endpoint
+https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547647?lang=en&region=us
+can identify teams with one of:
+
+```json
+  "name": "Buffalo Bills at Miami Dolphins",
+  "shortName": "BUF @ MIA",
+```
+
+## chat gpt suggestion based on above:
+
+untested. it probably makes some assumptions about the structure and content of the data.
+
+```python
+import json
+import urllib.request
+
+def get_upcoming_nfl_games():
+    # Define API endpoints
+    base_url = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
+    calendar_url = base_url + "calendar/blacklist"
+    season_url = base_url + "seasons/2023?lang=en&region=us"
+    weeks_url = base_url + "seasons/2023/types/2/weeks?lang=en&region=us"
+
+    # Fetch week details
+    with urllib.request.urlopen(calendar_url) as response:
+        calendar_data = json.load(response)
+
+    # Find the current week
+    current_week = None
+    for week in calendar_data['leagues'][0]['calendar']['blacklist']:
+        if week.get('current', False):
+            current_week = week
+            break
+
+    if current_week:
+        # Fetch season details
+        with urllib.request.urlopen(season_url) as response:
+            season_data = json.load(response)
+
+        # Determine the current season type (preseason, regular season, postseason, offseason)
+        current_type = None
+        for season_type in season_data['types']['items']:
+            if season_type.get('startDate') <= current_week['start']:
+                current_type = season_type['type']
+
+        if current_type:
+            # Fetch weeks for the current season type
+            with urllib.request.urlopen(weeks_url.replace('2', str(current_type))) as response:
+                weeks_data = json.load(response)
+
+            # Get events for the current week
+            current_week_id = current_week['id']
+            events_url = base_url + f"seasons/2023/types/{current_type}/weeks/{current_week_id}/events?lang=en&region=us"
+            with urllib.request.urlopen(events_url) as response:
+                events_data = json.load(response)
+
+            # Extract team information from events
+            upcoming_games = []
+            for event in events_data['events']:
+                home_team = event['competitions'][0]['competitors'][0]['team']['abbreviation']
+                away_team = event['competitions'][0]['competitors'][1]['team']['abbreviation']
+                matchup = {"home": home_team, "away": away_team}
+                upcoming_games.append(matchup)
+
+            return upcoming_games
+
+    return None
+
+# Example usage
+upcoming_games = get_upcoming_nfl_games()
+print(upcoming_games)
+```
