@@ -55,7 +55,7 @@ def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardSc
 
 
 def save_model_and_scaler(
-    model: LinearRegression, scaler: StandardScaler, timestamp: str
+    model: LinearRegression, scaler: StandardScaler, timestamp: int
 ) -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     asset_dir = os.path.join(script_dir, ASSET_DIR)

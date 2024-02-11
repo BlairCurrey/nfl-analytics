@@ -7,6 +7,7 @@ import urllib.request
 from urllib.error import HTTPError
 import os
 import sqlite3
+from typing import Iterable
 
 import pandas as pd
 
@@ -21,7 +22,7 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
-def download_data(years: range = range(1999, 2024)) -> None:
+def download_data(years: Iterable[int] = range(1999, 2024)) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
