@@ -29,6 +29,7 @@ jobs:
 
       # TODO: exit early but without error instead of exit1?
       # So job is succesful but doesnt go past this step
+      # Or cancel with gh run cancel? https://stackoverflow.com/questions/60589373/how-to-force-job-to-exit-in-github-actions-step
       - name: Check for matchups
         id: check-matchups
         # latest_matchups_file is the most recent matchup file by filename timestamp
@@ -44,14 +45,19 @@ jobs:
 
             if [[ $matchups_count -eq 0 ]]; then
               echo "Error: Latest matchups file is empty."
-              exit 1
+              exit 0
             fi
           else
             echo "Error: Latest matchups file not found."
-            exit 1
+            exit 0
           fi
 
           echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
+
+      - name: Test LATEST_MATCHUP_FILE var
+        env:
+          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
+        run: echo "The latest matchup file is $LATEST_MATCHUP_FILE"
 
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
