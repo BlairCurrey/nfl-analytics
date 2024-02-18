@@ -42,11 +42,11 @@ jobs:
 
             if [[ $matchups_count -eq 0 ]]; then
               echo "Error: Latest matchups file is empty."
-              return 0
+              exit 0
             fi
           else
             echo "Error: Latest matchups file not found."
-            return 0
+            exit 0
           fi
 
           echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
