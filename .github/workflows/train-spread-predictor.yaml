@@ -57,7 +57,7 @@ jobs:
       - name: Test LATEST_MATCHUP_FILE var
         env:
           LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
-        run: echo "The latest matchup file is $LATEST_MATCHUP_FILE"
+        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE"
 
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
