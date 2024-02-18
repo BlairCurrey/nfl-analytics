@@ -33,7 +33,7 @@ jobs:
         # errors if matchup file is empty
         run: |
           poetry run python ./nfl_analytics/main.py --download-upcoming-matchups
-          
+
           latest_matchups_file=$(ls -1t nfl_analytics/assets/matchups-*.json | head -n 1)
 
           if [[ -f "$latest_matchups_file" ]]; then
@@ -49,7 +49,7 @@ jobs:
             return 0
           fi
 
-        echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
+          echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
 
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
