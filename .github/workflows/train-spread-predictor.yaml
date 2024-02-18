@@ -27,6 +27,8 @@ jobs:
       - name: Install dependencies with Poetry
         run: poetry install
 
+      # TODO: exit early but without error instead of exit1?
+      # So job is succesful but doesnt go past this step
       - name: Check for matchups
         id: check-matchups
         # latest_matchups_file is the most recent matchup file by filename timestamp
