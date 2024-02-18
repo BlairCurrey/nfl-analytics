@@ -46,6 +46,7 @@ def get_upcoming_matchups() -> List[Matchup]:
         for competitor in competitors:
             home_away = competitor.get("homeAway")
 
+            # TODO: normalize team abbreviations. should match what Im using
             if home_away == "home":
                 home_team = _get_team_abbreviation(competitor["team"]["$ref"])
             elif home_away == "away":
