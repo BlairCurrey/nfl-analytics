@@ -137,6 +137,7 @@ def main():
 
         print("Training model...")
 
+        # -- Maybe require filepath to use saved version? --
         # This wont pick on updated data (downlaoded new data but still have combined, so it will use that)
         # Save combined dataframe to disk
         # save_dir = os.path.join("data", "combined")

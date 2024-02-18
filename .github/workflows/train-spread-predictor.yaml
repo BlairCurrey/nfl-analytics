@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,6 +26,30 @@ jobs:
 
       - name: Install dependencies with Poetry
         run: poetry install
+
+      - name: Check for matchups
+        id: check-matchups
+        # latest_matchups_file is the most recent matchup file by filename timestamp
+        # errors if matchup file is empty
+        run: |
+          poetry run python ./nfl_analytics/main.py --download-upcoming-matchups
+          
+          latest_matchups_file=$(ls -1t nfl_analytics/assets/matchups-*.json | head -n 1)
+
+          if [[ -f "$latest_matchups_file" ]]; then
+            echo "Latest matchups file: $latest_matchups_file"
+            matchups_count=$(jq length "$latest_matchups_file")
+
+            if [[ $matchups_count -eq 0 ]]; then
+              echo "Error: Latest matchups file is empty."
+              return 0
+            fi
+          else
+            echo "Error: Latest matchups file not found."
+            return 0
+          fi
+
+        echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
 
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
@@ -65,3 +88,11 @@ jobs:
             - **running_average-[timstamp].csv.gz:** Running averages used to form matchup inputs
 
             To make predictions, use these with the main.py --predict command on asset sets with matching timestamps.
+
+      # TODO: predict-upcoming step
+      # TODO: re-use latest_matchups_file predict-upcoming step
+      #  https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
+      - name: Predict upcoming matchups
+        env:
+          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
+        run: echo "The latest matchup file is $LATEST_MATCHUP_FILE"
