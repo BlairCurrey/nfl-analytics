@@ -3,10 +3,18 @@ Handles getting the data for upcoming matchups.
 """
 
 import json
+import os
+import time
+from datetime import datetime
 import urllib.request
 from typing import Any, Dict, List
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from enum import Enum
+from nfl_analytics.utils import ASSET_DIR as ASSET_DIR_
+from nfl_analytics.config import MATCHUPS_FILENAME
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSET_DIR = os.path.join(SCRIPT_DIR, ASSET_DIR_)
 BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
 
 
@@ -16,10 +24,50 @@ class Matchup:
     away_team: str
 
 
+class SeasonType(Enum):
+    PRESEASON = 1
+    REGULAR = 2
+    POSTSEASON = 3
+    OFFSEASON = 4
+
+
+@dataclass
+class SeasonPosition:
+    type: SeasonType
+    week: str
+
+
 # TODO: how to handle when its probowl?
 # it will be an entry in the calendar among the playoffs in postseason.
 # I guess it will also be in the events and we might have trouble forming the machtup (not in the list of team codes)
 # Not sure I simply want to skip the week in case its not its OWN week sometime.
+
+
+def save_upcoming_matchups(matchups: List[Matchup]) -> None:
+    os.makedirs(ASSET_DIR, exist_ok=True)
+
+    filepath = os.path.join(ASSET_DIR, f"{MATCHUPS_FILENAME}-{int(time.time())}.json")
+    with open(filepath, "w") as json_file:
+        matchups_dict = [asdict(p) for p in matchups]
+        json.dump(matchups_dict, json_file)
+
+    print(f"Upcoming matchups saved to {filepath}")
+
+
+def load_matchups(filepath: str) -> List[Matchup]:
+    with open(filepath, "r") as file:
+        matchups_data = json.load(file)
+
+    print(matchups_data)
+
+    matchups_list = []
+    for matchup_data in matchups_data:
+        matchup = Matchup(
+            home_team=matchup_data["home_team"], away_team=matchup_data["away_team"]
+        )
+        matchups_list.append(matchup)
+    print(matchups_list)
+    return matchups_list
 
 
 def get_upcoming_matchups() -> List[Matchup]:
@@ -61,9 +109,39 @@ def get_upcoming_matchups() -> List[Matchup]:
     return matchups
 
 
-def _get_upcoming_event_urls():
+def _get_season_position(calendar_data: Dict[str, Any]) -> SeasonPosition | None:
+    current_date = datetime.utcnow()
+
+    for section in calendar_data["sections"]:
+        section_start_date = datetime.strptime(section["startDate"], "%Y-%m-%dT%H:%MZ")
+        section_end_date = datetime.strptime(section["endDate"], "%Y-%m-%dT%H:%MZ")
+
+        if section_start_date <= current_date <= section_end_date:
+            for entry in section["entries"]:
+                entry_start_date = datetime.strptime(
+                    entry["startDate"], "%Y-%m-%dT%H:%MZ"
+                )
+                entry_end_date = datetime.strptime(entry["endDate"], "%Y-%m-%dT%H:%MZ")
+
+                if entry_start_date <= current_date <= entry_end_date:
+                    season_type = SeasonType(int(section["value"]))
+                    week = entry["value"]
+                    return SeasonPosition(type=season_type, week=week)
+
+    raise ValueError("Could not find current season position")
+
+
+def _get_upcoming_event_urls() -> List[str]:
     # Get calendar to find what the current season is
     calendar_data = _get_calendar_data()
+
+    season_position = _get_season_position(calendar_data)
+
+    # only get events for regular season and postseason, but not regular season week 1
+    if season_position not in [SeasonType.REGULAR, SeasonType.POSTSEASON]:
+        return []
+    if season_position is SeasonType.REGULAR and season_position.week == "1":
+        return []
 
     # Get's the current season including the current week
     season_url = calendar_data.get("season", {}).get("$ref")
@@ -76,6 +154,7 @@ def _get_upcoming_event_urls():
         season_data.get("type", {}).get("week", {}).get("events", {}).get("$ref")
     )
     if events_url is None:
+        print("Events url not found from season data.")
         raise ValueError("Events url not found.")
     event_data = _get_event_data(events_url)
 

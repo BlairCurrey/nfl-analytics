@@ -21,18 +21,24 @@ from nfl_analytics.dataframes import (
     build_running_avg_dataframe,
     build_training_dataframe,
 )
-from nfl_analytics.schedule import get_upcoming_matchups
+from nfl_analytics.schedule import (
+    get_upcoming_matchups,
+    save_upcoming_matchups,
+    load_matchups,
+)
 from nfl_analytics.utils import is_valid_year, get_latest_timestamped_filepath
 from nfl_analytics.config import (
     TEAMS,
     RUNNING_AVG_DF_FILENAME,
     TRAINED_MODEL_FILENAME,
     TRAINED_SCALER_FILENAME,
+    MATCHUPS_FILENAME,
 )
 
 
 # ROUGH CLI docs:
-# --download: optional. takes list of years. or if empty, defaults to downloading all years. usage: python main.py --download 2021 2022
+# --download: optional. takes list of years. or if empty, defaults to downloading all play-by-play data years. usage: python main.py --download 2021 2022
+# --download-upcoming-matchups: optional. downloads the upcoming matchups. can be used by --predict-upcoming. usage: python main.py --download-upcoming-matchups
 # --train: optional. if present, trains the model. usage: python main.py --train
 # --predict: optional. takes two arguments, home team and away team. usage: python main.py --predict "CHI" "MIN"
 # --predict-upcoming: optional. fetches and predicts all upcoming matchups. usage: python main.py --predict-upcoming
@@ -77,6 +83,11 @@ def main():
         help="Download data for the specified years. The year corresponds to the season start.",
     )
     parser.add_argument(
+        "--download-upcoming-matchups",
+        action="store_true",
+        help="Downloads the upcoming matchups. Downloaded machup data can be used by --predict-upcoming",
+    )
+    parser.add_argument(
         "--train",
         action="store_true",
         help="Train the model using the downloaded data.",
@@ -89,8 +100,9 @@ def main():
     )
     parser.add_argument(
         "--predict-upcoming",
-        action="store_true",
-        help="Predict outcomes for all upcoming matchups.",
+        nargs="*",
+        metavar="matchups_path",
+        help="Predict outcomes for all upcoming matchups. Fetches the latest matchups with no argument values. Optionally provide a path to matchups JSON or use 'latest' to get the latest saved matchups.",
     )
     args = parser.parse_args()
 
@@ -105,6 +117,11 @@ def main():
                 download_data(year_set)
         else:
             download_data()
+
+    if args.download_upcoming_matchups:
+        print("Downloading upcoming matchups...")
+        matchups = get_upcoming_matchups()
+        save_upcoming_matchups(matchups)
 
     if args.train:
         start_time = time.time()
@@ -161,8 +178,37 @@ def main():
             f"Predicted spread for {home_team} (home) vs {away_team} (away): {predicted_spread}"
         )
 
-    if args.predict_upcoming:
-        matchups = get_upcoming_matchups()
+    if args.predict_upcoming is not None:
+        matchups = None
+
+        if args.predict_upcoming:
+            path_or_latest = args.predict_upcoming[0]
+
+            if path_or_latest == "latest":
+                print("Loading latest matchups")
+                try:
+                    filepath = get_latest_timestamped_filepath(
+                        MATCHUPS_FILENAME, ".json"
+                    )
+                    matchups = load_matchups(filepath)
+                except FileNotFoundError:
+                    print("No matchup file found.")
+                    exit(1)
+            else:
+                print("Loading matchups from specified path:", path_or_latest)
+                try:
+                    matchups = load_matchups(path_or_latest)
+                except FileNotFoundError:
+                    print("No matchup file found.")
+                    exit(1)
+        else:
+            print("Fetching latest matchups")
+            matchups = get_upcoming_matchups()
+
+        if not matchups:
+            print("No matchups found.")
+            exit(0)
+
         df_running_avg = _load_df_running_avg()
         model, scaler = _load_model_and_scaler()
 

@@ -54,3 +54,4 @@ TEAMS = [
 RUNNING_AVG_DF_FILENAME = "running_average"
 TRAINED_MODEL_FILENAME = "trained_model"
 TRAINED_SCALER_FILENAME = "trained_scaler"
+MATCHUPS_FILENAME = "matchups"

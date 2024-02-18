@@ -1,0 +1,407 @@
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/calendar/blacklist?lang=en&region=us",
+  "type": "list",
+  "startDate": "2023-08-01T07:00Z",
+  "endDate": "2024-02-15T07:59Z",
+  "eventDate": {
+    "type": "blacklist",
+    "dates": [
+      "2023-08-01T07:00Z",
+      "2023-08-02T07:00Z",
+      "2023-08-04T07:00Z",
+      "2023-08-05T07:00Z",
+      "2023-08-06T07:00Z",
+      "2023-08-07T07:00Z",
+      "2023-08-08T07:00Z",
+      "2023-08-09T07:00Z",
+      "2023-08-14T07:00Z",
+      "2023-08-15T07:00Z",
+      "2023-08-16T07:00Z",
+      "2023-08-22T07:00Z",
+      "2023-08-23T07:00Z",
+      "2023-08-28T07:00Z",
+      "2023-08-29T07:00Z",
+      "2023-08-30T07:00Z",
+      "2023-08-31T07:00Z",
+      "2023-09-01T07:00Z",
+      "2023-09-02T07:00Z",
+      "2023-09-03T07:00Z",
+      "2023-09-04T07:00Z",
+      "2023-09-05T07:00Z",
+      "2023-09-06T07:00Z",
+      "2023-09-08T07:00Z",
+      "2023-09-09T07:00Z",
+      "2023-09-12T07:00Z",
+      "2023-09-13T07:00Z",
+      "2023-09-15T07:00Z",
+      "2023-09-16T07:00Z",
+      "2023-09-19T07:00Z",
+      "2023-09-20T07:00Z",
+      "2023-09-22T07:00Z",
+      "2023-09-23T07:00Z",
+      "2023-09-26T07:00Z",
+      "2023-09-27T07:00Z",
+      "2023-09-29T07:00Z",
+      "2023-09-30T07:00Z",
+      "2023-10-03T07:00Z",
+      "2023-10-04T07:00Z",
+      "2023-10-06T07:00Z",
+      "2023-10-07T07:00Z",
+      "2023-10-10T07:00Z",
+      "2023-10-11T07:00Z",
+      "2023-10-13T07:00Z",
+      "2023-10-14T07:00Z",
+      "2023-10-17T07:00Z",
+      "2023-10-18T07:00Z",
+      "2023-10-20T07:00Z",
+      "2023-10-21T07:00Z",
+      "2023-10-24T07:00Z",
+      "2023-10-25T07:00Z",
+      "2023-10-27T07:00Z",
+      "2023-10-28T07:00Z",
+      "2023-10-31T07:00Z",
+      "2023-11-01T07:00Z",
+      "2023-11-03T07:00Z",
+      "2023-11-04T07:00Z",
+      "2023-11-07T08:00Z",
+      "2023-11-08T08:00Z",
+      "2023-11-10T08:00Z",
+      "2023-11-11T08:00Z",
+      "2023-11-14T08:00Z",
+      "2023-11-15T08:00Z",
+      "2023-11-17T08:00Z",
+      "2023-11-18T08:00Z",
+      "2023-11-21T08:00Z",
+      "2023-11-22T08:00Z",
+      "2023-11-25T08:00Z",
+      "2023-11-28T08:00Z",
+      "2023-11-29T08:00Z",
+      "2023-12-01T08:00Z",
+      "2023-12-02T08:00Z",
+      "2023-12-05T08:00Z",
+      "2023-12-06T08:00Z",
+      "2023-12-08T08:00Z",
+      "2023-12-09T08:00Z",
+      "2023-12-12T08:00Z",
+      "2023-12-13T08:00Z",
+      "2023-12-15T08:00Z",
+      "2023-12-16T08:00Z",
+      "2023-12-19T08:00Z",
+      "2023-12-20T08:00Z",
+      "2023-12-22T08:00Z",
+      "2023-12-26T08:00Z",
+      "2023-12-27T08:00Z",
+      "2023-12-29T08:00Z",
+      "2024-01-01T08:00Z",
+      "2024-01-02T08:00Z",
+      "2024-01-03T08:00Z",
+      "2024-01-04T08:00Z",
+      "2024-01-05T08:00Z",
+      "2024-01-06T08:00Z",
+      "2024-01-08T08:00Z",
+      "2024-01-09T08:00Z",
+      "2024-01-10T08:00Z",
+      "2024-01-11T08:00Z",
+      "2024-01-12T08:00Z",
+      "2024-01-16T08:00Z",
+      "2024-01-17T08:00Z",
+      "2024-01-18T08:00Z",
+      "2024-01-19T08:00Z",
+      "2024-01-22T08:00Z",
+      "2024-01-23T08:00Z",
+      "2024-01-24T08:00Z",
+      "2024-01-25T08:00Z",
+      "2024-01-26T08:00Z",
+      "2024-01-27T08:00Z",
+      "2024-01-29T08:00Z",
+      "2024-01-30T08:00Z",
+      "2024-01-31T08:00Z",
+      "2024-02-01T08:00Z",
+      "2024-02-02T08:00Z",
+      "2024-02-03T08:00Z",
+      "2024-02-04T08:00Z",
+      "2024-02-05T08:00Z",
+      "2024-02-06T08:00Z",
+      "2024-02-07T08:00Z",
+      "2024-02-08T08:00Z",
+      "2024-02-09T08:00Z",
+      "2024-02-10T08:00Z",
+      "2024-02-12T08:00Z",
+      "2024-02-13T08:00Z",
+      "2024-02-14T08:00Z"
+    ]
+  },
+  "sections": [
+    {
+      "label": "Preseason",
+      "value": "1",
+      "startDate": "2023-08-01T07:00Z",
+      "endDate": "2023-09-07T06:59Z",
+      "entries": [
+        {
+          "label": "Hall of Fame Weekend",
+          "alternateLabel": "HOF",
+          "detail": "Aug 1-8",
+          "value": "1",
+          "startDate": "2023-08-01T07:00Z",
+          "endDate": "2023-08-09T06:59Z"
+        },
+        {
+          "label": "Preseason Week 1",
+          "alternateLabel": "Pre Wk 1",
+          "detail": "Aug 9-15",
+          "value": "2",
+          "startDate": "2023-08-09T07:00Z",
+          "endDate": "2023-08-16T06:59Z"
+        },
+        {
+          "label": "Preseason Week 2",
+          "alternateLabel": "Pre Wk 2",
+          "detail": "Aug 16-22",
+          "value": "3",
+          "startDate": "2023-08-16T07:00Z",
+          "endDate": "2023-08-23T06:59Z"
+        },
+        {
+          "label": "Preseason Week 3",
+          "alternateLabel": "Pre Wk 3",
+          "detail": "Aug 23-Sep 6",
+          "value": "4",
+          "startDate": "2023-08-23T07:00Z",
+          "endDate": "2023-09-07T06:59Z"
+        }
+      ],
+      "seasonType": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1?lang=en&region=us"
+      }
+    },
+    {
+      "label": "Regular Season",
+      "value": "2",
+      "startDate": "2023-09-07T07:00Z",
+      "endDate": "2024-01-11T07:59Z",
+      "entries": [
+        {
+          "label": "Week 1",
+          "alternateLabel": "Week 1",
+          "detail": "Sep 7-12",
+          "value": "1",
+          "startDate": "2023-09-07T07:00Z",
+          "endDate": "2023-09-13T06:59Z"
+        },
+        {
+          "label": "Week 2",
+          "alternateLabel": "Week 2",
+          "detail": "Sep 13-19",
+          "value": "2",
+          "startDate": "2023-09-13T07:00Z",
+          "endDate": "2023-09-20T06:59Z"
+        },
+        {
+          "label": "Week 3",
+          "alternateLabel": "Week 3",
+          "detail": "Sep 20-26",
+          "value": "3",
+          "startDate": "2023-09-20T07:00Z",
+          "endDate": "2023-09-27T06:59Z"
+        },
+        {
+          "label": "Week 4",
+          "alternateLabel": "Week 4",
+          "detail": "Sep 27-Oct 3",
+          "value": "4",
+          "startDate": "2023-09-27T07:00Z",
+          "endDate": "2023-10-04T06:59Z"
+        },
+        {
+          "label": "Week 5",
+          "alternateLabel": "Week 5",
+          "detail": "Oct 4-10",
+          "value": "5",
+          "startDate": "2023-10-04T07:00Z",
+          "endDate": "2023-10-11T06:59Z"
+        },
+        {
+          "label": "Week 6",
+          "alternateLabel": "Week 6",
+          "detail": "Oct 11-17",
+          "value": "6",
+          "startDate": "2023-10-11T07:00Z",
+          "endDate": "2023-10-18T06:59Z"
+        },
+        {
+          "label": "Week 7",
+          "alternateLabel": "Week 7",
+          "detail": "Oct 18-24",
+          "value": "7",
+          "startDate": "2023-10-18T07:00Z",
+          "endDate": "2023-10-25T06:59Z"
+        },
+        {
+          "label": "Week 8",
+          "alternateLabel": "Week 8",
+          "detail": "Oct 25-31",
+          "value": "8",
+          "startDate": "2023-10-25T07:00Z",
+          "endDate": "2023-11-01T06:59Z"
+        },
+        {
+          "label": "Week 9",
+          "alternateLabel": "Week 9",
+          "detail": "Nov 1-7",
+          "value": "9",
+          "startDate": "2023-11-01T07:00Z",
+          "endDate": "2023-11-08T07:59Z"
+        },
+        {
+          "label": "Week 10",
+          "alternateLabel": "Week 10",
+          "detail": "Nov 8-14",
+          "value": "10",
+          "startDate": "2023-11-08T08:00Z",
+          "endDate": "2023-11-15T07:59Z"
+        },
+        {
+          "label": "Week 11",
+          "alternateLabel": "Week 11",
+          "detail": "Nov 15-21",
+          "value": "11",
+          "startDate": "2023-11-15T08:00Z",
+          "endDate": "2023-11-22T07:59Z"
+        },
+        {
+          "label": "Week 12",
+          "alternateLabel": "Week 12",
+          "detail": "Nov 22-28",
+          "value": "12",
+          "startDate": "2023-11-22T08:00Z",
+          "endDate": "2023-11-29T07:59Z"
+        },
+        {
+          "label": "Week 13",
+          "alternateLabel": "Week 13",
+          "detail": "Nov 29-Dec 5",
+          "value": "13",
+          "startDate": "2023-11-29T08:00Z",
+          "endDate": "2023-12-06T07:59Z"
+        },
+        {
+          "label": "Week 14",
+          "alternateLabel": "Week 14",
+          "detail": "Dec 6-12",
+          "value": "14",
+          "startDate": "2023-12-06T08:00Z",
+          "endDate": "2023-12-13T07:59Z"
+        },
+        {
+          "label": "Week 15",
+          "alternateLabel": "Week 15",
+          "detail": "Dec 13-19",
+          "value": "15",
+          "startDate": "2023-12-13T08:00Z",
+          "endDate": "2023-12-20T07:59Z"
+        },
+        {
+          "label": "Week 16",
+          "alternateLabel": "Week 16",
+          "detail": "Dec 20-26",
+          "value": "16",
+          "startDate": "2023-12-20T08:00Z",
+          "endDate": "2023-12-27T07:59Z"
+        },
+        {
+          "label": "Week 17",
+          "alternateLabel": "Week 17",
+          "detail": "Dec 27-Jan 2",
+          "value": "17",
+          "startDate": "2023-12-27T08:00Z",
+          "endDate": "2024-01-03T07:59Z"
+        },
+        {
+          "label": "Week 18",
+          "alternateLabel": "Week 18",
+          "detail": "Jan 3-10",
+          "value": "18",
+          "startDate": "2024-01-03T08:00Z",
+          "endDate": "2024-01-11T07:59Z"
+        }
+      ],
+      "seasonType": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2?lang=en&region=us"
+      }
+    },
+    {
+      "label": "Postseason",
+      "value": "3",
+      "startDate": "2024-01-11T08:00Z",
+      "endDate": "2024-02-15T07:59Z",
+      "entries": [
+        {
+          "label": "Wild Card",
+          "alternateLabel": "Wild Card",
+          "detail": "Jan 11-16",
+          "value": "1",
+          "startDate": "2024-01-11T08:00Z",
+          "endDate": "2024-01-17T07:59Z"
+        },
+        {
+          "label": "Divisional Round",
+          "alternateLabel": "Div Rd",
+          "detail": "Jan 17-23",
+          "value": "2",
+          "startDate": "2024-01-17T08:00Z",
+          "endDate": "2024-01-24T07:59Z"
+        },
+        {
+          "label": "Conference Championship",
+          "alternateLabel": "Conf Champ",
+          "detail": "Jan 24-30",
+          "value": "3",
+          "startDate": "2024-01-24T08:00Z",
+          "endDate": "2024-01-31T07:59Z"
+        },
+        {
+          "label": "Pro Bowl",
+          "alternateLabel": "Pro Bowl",
+          "detail": "Jan 31-Feb 6",
+          "value": "4",
+          "startDate": "2024-01-31T08:00Z",
+          "endDate": "2024-02-07T07:59Z"
+        },
+        {
+          "label": "Super Bowl",
+          "alternateLabel": "Super Bowl",
+          "detail": "Feb 7-14",
+          "value": "5",
+          "startDate": "2024-02-07T08:00Z",
+          "endDate": "2024-02-15T07:59Z"
+        }
+      ],
+      "seasonType": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3?lang=en&region=us"
+      }
+    },
+    {
+      "label": "Off Season",
+      "value": "4",
+      "startDate": "2024-02-15T08:00Z",
+      "endDate": "2024-08-01T06:59Z",
+      "entries": [
+        {
+          "label": "Week 1",
+          "alternateLabel": "Week 1",
+          "detail": "Feb 15-Jul 31",
+          "value": "1",
+          "startDate": "2024-02-15T08:00Z",
+          "endDate": "2024-08-01T06:59Z"
+        }
+      ],
+      "seasonType": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4?lang=en&region=us"
+      }
+    }
+  ],
+  "season": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023?lang=en&region=us"
+  }
+}
