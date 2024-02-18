@@ -39,6 +39,8 @@ jobs:
 
           latest_matchups_file=$(ls -1t nfl_analytics/assets/matchups-*.json | head -n 1)
 
+          echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
+
           if [[ -f "$latest_matchups_file" ]]; then
             echo "Latest matchups file: $latest_matchups_file"
             matchups_count=$(jq length "$latest_matchups_file")
@@ -51,8 +53,6 @@ jobs:
             echo "Error: Latest matchups file not found."
             exit 0
           fi
-
-          echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
 
       - name: Test LATEST_MATCHUP_FILE var
         env:
