@@ -58,15 +58,13 @@ def load_matchups(filepath: str) -> List[Matchup]:
     with open(filepath, "r") as file:
         matchups_data = json.load(file)
 
-    print(matchups_data)
-
     matchups_list = []
     for matchup_data in matchups_data:
         matchup = Matchup(
             home_team=matchup_data["home_team"], away_team=matchup_data["away_team"]
         )
         matchups_list.append(matchup)
-    print(matchups_list)
+
     return matchups_list
 
 
