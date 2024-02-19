@@ -26,7 +26,11 @@ from nfl_analytics.schedule import (
     save_upcoming_matchups,
     load_matchups,
 )
-from nfl_analytics.utils import is_valid_year, get_latest_timestamped_filepath
+from nfl_analytics.utils import (
+    is_valid_year,
+    get_latest_timestamped_filepath,
+    normalize_team_abbr,
+)
 from nfl_analytics.config import (
     TEAMS,
     RUNNING_AVG_DF_FILENAME,
@@ -159,8 +163,8 @@ def main():
         # TODO: this will silently predict based off old data if thats all we have.
         # Perhaps I should require the week/year in the predict fn? Or at least log
         # year/week in predict? Or maybe aligning everything by timestamp will resolve this?
-        home_team = args.predict[0].upper()
-        away_team = args.predict[1].upper()
+        home_team = normalize_team_abbr(args.predict[0].upper())
+        away_team = normalize_team_abbr(args.predict[1].upper())
 
         for team in [home_team, away_team]:
             if team not in TEAMS:
@@ -216,7 +220,9 @@ def main():
         predictions: List[Prediction] = []
 
         for matchup in matchups:
-            home_team, away_team = matchup.home_team, matchup.away_team
+            home_team, away_team = normalize_team_abbr(
+                matchup.home_team
+            ), normalize_team_abbr(matchup.away_team)
 
             for team in [home_team, away_team]:
                 if team not in TEAMS:

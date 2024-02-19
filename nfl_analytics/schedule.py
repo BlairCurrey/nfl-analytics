@@ -10,7 +10,7 @@ import urllib.request
 from typing import Any, Dict, List
 from dataclasses import dataclass, asdict
 from enum import Enum
-from nfl_analytics.utils import ASSET_DIR as ASSET_DIR_
+from nfl_analytics.utils import ASSET_DIR as ASSET_DIR_, normalize_team_abbr
 from nfl_analytics.config import MATCHUPS_FILENAME
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -92,7 +92,11 @@ def get_upcoming_matchups() -> List[Matchup]:
         for competitor in competitors:
             home_away = competitor.get("homeAway")
 
-            # TODO: normalize team abbreviations. should match what Im using
+            # TODO: handle these teams? they are teams foudn in the team page, probably from probowl.
+            #   - AFC, NFC. Probably from Probowl.
+            #   - RICE, IRVIN. ??? Maybe some Probowl thing.
+            # Will I encounter them (probably, if probowl is in the events list)
+
             if home_away == "home":
                 home_team = _get_team_abbreviation(competitor["team"]["$ref"])
             elif home_away == "away":
@@ -163,7 +167,7 @@ def _get_team_abbreviation(team_url: str) -> str:
     with urllib.request.urlopen(team_url) as response:
         team = json.load(response)
 
-    return team["abbreviation"]
+    return normalize_team_abbr(team["abbreviation"])
 
 
 def _get_event_data(events_url: str) -> Dict[str, Any]:

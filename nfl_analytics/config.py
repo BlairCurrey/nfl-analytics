@@ -51,6 +51,12 @@ TEAMS = [
     "NO",
     "TEN",
 ]
+
+TEAM_ABBR_MAP = {
+    "LAR": "LA",
+    "WSH": "WAS",
+}
+
 RUNNING_AVG_DF_FILENAME = "running_average"
 TRAINED_MODEL_FILENAME = "trained_model"
 TRAINED_SCALER_FILENAME = "trained_scaler"
