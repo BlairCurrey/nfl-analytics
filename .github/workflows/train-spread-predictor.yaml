@@ -79,10 +79,18 @@ jobs:
       - name: Train Model
         run: poetry run python ./nfl_analytics/main.py --train
 
+      - name: Predict upcoming matchups
+        env:
+          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
+        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
+          # TODO: ensure prediction gets grouped properly (by timestamp or year/week)
+          # TODO: exclude matchups (sans predictions) from release or
+          # ensure it gets grouped properly (timestamp? change timestamp to year/week)
           files: ./nfl_analytics/assets/*
           tag_name: spread-predictor
           draft: true
@@ -96,11 +104,3 @@ jobs:
             - **running_average-[timstamp].csv.gz:** Running averages used to form matchup inputs
 
             To make predictions, use these with the main.py --predict command on asset sets with matching timestamps.
-
-      # TODO: predict-upcoming step
-      # TODO: re-use latest_matchups_file predict-upcoming step
-      #  https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
-      - name: Predict upcoming matchups
-        env:
-          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
-        run: echo "The latest matchup file is $LATEST_MATCHUP_FILE"
