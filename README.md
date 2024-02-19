@@ -109,6 +109,8 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - [ ] rethink release setup. currently it publishes a new set with timestamp to one spread-predictor release. its going to accumulate a lot of stuff and the timestamps are not very easy to understand.
     - override the same release? meh dont love that
     - new release for each? spread-predicter-[timestamp] (w/ or w/out timestamp on files)
+    - use year/week instead of timestamp?
+    - or, just overide old releases? do I ever need the old ones?
   - [x] add error exits to cli util. job should fail if --download, --train etc. fails
   - [ ] run on some schedule. end of day tuesday between season start and season end?
   - [ ] output model mean absolute error to md file and use as body of release (with any other info). have some release template.
@@ -133,12 +135,14 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - just need to see how its actually used
   - I guess its good for development purposes? maybe just make the df arg in train_model(df) optional and build from ground up if not provided which will be used in cli/deployment but developing can pass it df? idk
   - keeping as it makes it a bit easier to develop in notebook (maybe) and its just not that important to put in the train fn. although the idea that it will always be done for training seems correct.
-- [ ] write script that gets upcoming games and makes prediction from model
+- [x] write script that gets upcoming games and makes prediction from model
   - try to find a good source for the schedule (nflfastR for that too maybe?).
   - [x] matchups from schedule (like `[{home: 'DET', away: 'CHI'}, ...]`)
-  - [ ] expose this on cli (with no predict, it gets upcoming games?)
+  - [x] expose this on cli (with no predict, it gets upcoming games?)
+  - [x] add step to ci that predicts upcoming games
+- [ ] upcoming prediction website
   - [ ] use script and some template to generate html page with predictions.
-  - [ ] make gh action that does this periodically and publishes to gh pages
+  - [ ] publish to github pages (use seperate branch to commit dist? look how i did it for https://github.com/BlairCurrey/peggle-clone)
 
 # Current status:
 
@@ -366,7 +370,7 @@ can identify teams with one of:
 
 ## chat gpt suggestion based on above:
 
-untested. it probably makes some assumptions about the structure and content of the data.
+untested. it probably makes some bad assumptions about the structure and content of the data.
 
 ```python
 import json
