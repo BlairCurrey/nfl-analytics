@@ -1,0 +1,313 @@
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378?lang=en&region=us",
+  "id": "401547378",
+  "uid": "s:20~l:28~e:401547378",
+  "date": "2024-02-11T23:30Z",
+  "name": "San Francisco 49ers at Kansas City Chiefs",
+  "shortName": "SF VS KC",
+  "season": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023?lang=en&region=us"
+  },
+  "seasonType": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3?lang=en&region=us"
+  },
+  "week": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3/weeks/5?lang=en&region=us"
+  },
+  "timeValid": true,
+  "competitions": [
+    {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378?lang=en&region=us",
+      "id": "401547378",
+      "guid": "1da50859-8d47-3b82-adf0-3b7266141e46",
+      "uid": "s:20~l:28~e:401547378~c:401547378",
+      "date": "2024-02-11T23:30Z",
+      "attendance": 0,
+      "type": {
+        "id": "1",
+        "text": "Standard",
+        "abbreviation": "STD",
+        "slug": "standard",
+        "type": "standard"
+      },
+      "timeValid": true,
+      "dateValid": false,
+      "neutralSite": true,
+      "divisionCompetition": false,
+      "conferenceCompetition": false,
+      "previewAvailable": true,
+      "recapAvailable": false,
+      "boxscoreAvailable": false,
+      "lineupAvailable": false,
+      "gamecastAvailable": false,
+      "playByPlayAvailable": false,
+      "conversationAvailable": true,
+      "commentaryAvailable": false,
+      "pickcenterAvailable": true,
+      "summaryAvailable": true,
+      "liveAvailable": false,
+      "ticketsAvailable": true,
+      "shotChartAvailable": false,
+      "timeoutsAvailable": false,
+      "possessionArrowAvailable": false,
+      "onWatchESPN": false,
+      "recent": false,
+      "bracketAvailable": false,
+      "gameSource": {
+        "id": "1",
+        "description": "basic/manual",
+        "state": "basic"
+      },
+      "boxscoreSource": { "id": "0", "description": "none", "state": "none" },
+      "playByPlaySource": { "id": "0", "description": "none", "state": "none" },
+      "linescoreSource": {
+        "id": "1",
+        "description": "basic/manual",
+        "state": "basic"
+      },
+      "statsSource": { "id": "0", "description": "none", "state": "none" },
+      "venue": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/venues/6501?lang=en&region=us",
+        "id": "6501",
+        "fullName": "Allegiant Stadium",
+        "address": { "city": "Las Vegas", "state": "NV", "zipCode": "89118" },
+        "capacity": 0,
+        "grass": true,
+        "indoor": true,
+        "images": [
+          {
+            "href": "https://a.espncdn.com/i/venues/nfl/day/6501.jpg",
+            "width": 2000,
+            "height": 1125,
+            "alt": "",
+            "rel": ["full", "day"]
+          },
+          {
+            "href": "https://a.espncdn.com/i/venues/nfl/day/interior/6501.jpg",
+            "width": 2000,
+            "height": 1125,
+            "alt": "",
+            "rel": ["full", "day", "interior"]
+          }
+        ]
+      },
+      "weather": {
+        "$ref": "http://sports.core.api.espn.com/v2/weather/zip/89118?date=20240211&hour=18&lang=en&region=us",
+        "type": "Forecast",
+        "displayValue": "Sunny",
+        "zipCode": "89118",
+        "lastUpdated": "2024-02-01T23:06Z",
+        "windSpeed": 10,
+        "windDirection": "N",
+        "temperature": 60,
+        "highTemperature": 60,
+        "lowTemperature": 60,
+        "conditionId": "1",
+        "gust": 17,
+        "precipitation": 0,
+        "link": {
+          "language": "en-US",
+          "rel": ["89118"],
+          "href": "http://www.accuweather.com/en/us/allegiant-stadium-nv/89101/hourly-weather-forecast/209206_poi?day=11&hbhhour=15&lang=en-us",
+          "text": "Weather",
+          "shortText": "Weather",
+          "isExternal": true,
+          "isPremium": false
+        }
+      },
+      "competitors": [
+        {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/competitors/12?lang=en&region=us",
+          "id": "12",
+          "uid": "s:20~l:28~t:12",
+          "type": "team",
+          "order": 0,
+          "homeAway": "home",
+          "team": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/12?lang=en&region=us"
+          },
+          "score": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/competitors/12/score?lang=en&region=us"
+          },
+          "record": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/12/record?lang=en&region=us"
+          },
+          "previousCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547379/competitions/401547379?lang=en&region=us"
+          }
+        },
+        {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/competitors/25?lang=en&region=us",
+          "id": "25",
+          "uid": "s:20~l:28~t:25",
+          "type": "team",
+          "order": 1,
+          "homeAway": "away",
+          "team": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/teams/25?lang=en&region=us"
+          },
+          "score": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/competitors/25/score?lang=en&region=us"
+          },
+          "record": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/teams/25/record?lang=en&region=us"
+          },
+          "previousCompetition": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547380/competitions/401547380?lang=en&region=us"
+          }
+        }
+      ],
+      "notes": [{ "type": "event", "headline": "Super Bowl LVIII" }],
+      "situation": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/situation?lang=en&region=us"
+      },
+      "status": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/status?lang=en&region=us"
+      },
+      "odds": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/odds?lang=en&region=us"
+      },
+      "broadcasts": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/broadcasts?lang=en&region=us"
+      },
+      "tickets": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/tickets?lang=en&region=us"
+      },
+      "leaders": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/leaders?lang=en&region=us"
+      },
+      "links": [
+        {
+          "language": "en-US",
+          "rel": ["summary", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/game/_/gameId/401547378/49ers-chiefs",
+          "text": "Gamecast",
+          "shortText": "Summary",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["summary", "sportscenter", "app", "event"],
+          "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547378",
+          "text": "Gamecast",
+          "shortText": "Summary",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["now", "desktop", "event"],
+          "href": "https://www.espn.com/nfl/game/_/gameId/401547378",
+          "text": "Now",
+          "shortText": "Now",
+          "isExternal": false,
+          "isPremium": false
+        },
+        {
+          "language": "en-US",
+          "rel": ["preview", "desktop", "event"],
+          "href": "http://www.espn.com/nfl/preview/_/gameId/401547378",
+          "text": "Preview",
+          "shortText": "Preview",
+          "isExternal": false,
+          "isPremium": false
+        }
+      ],
+      "predictor": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/predictor?lang=en&region=us"
+      },
+      "powerIndexes": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/powerindex?lang=en&region=us"
+      },
+      "format": {
+        "regulation": {
+          "periods": 4,
+          "displayName": "Quarter",
+          "slug": "quarter",
+          "clock": 900.0
+        },
+        "overtime": {
+          "periods": 0,
+          "displayName": "sudden-death",
+          "slug": "sudden-death",
+          "clock": 900.0
+        }
+      },
+      "drives": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/401547378/competitions/401547378/drives?lang=en&region=us"
+      },
+      "hasDefensiveStats": false
+    }
+  ],
+  "links": [
+    {
+      "language": "en-US",
+      "rel": ["summary", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/game/_/gameId/401547378/49ers-chiefs",
+      "text": "Gamecast",
+      "shortText": "Summary",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["summary", "sportscenter", "app", "event"],
+      "href": "sportscenter://x-callback-url/showGame?sportName=football&leagueAbbrev=nfl&gameId=401547378",
+      "text": "Gamecast",
+      "shortText": "Summary",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["now", "desktop", "event"],
+      "href": "https://www.espn.com/nfl/game/_/gameId/401547378",
+      "text": "Now",
+      "shortText": "Now",
+      "isExternal": false,
+      "isPremium": false
+    },
+    {
+      "language": "en-US",
+      "rel": ["preview", "desktop", "event"],
+      "href": "http://www.espn.com/nfl/preview/_/gameId/401547378",
+      "text": "Preview",
+      "shortText": "Preview",
+      "isExternal": false,
+      "isPremium": false
+    }
+  ],
+  "venues": [
+    {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/venues/6501?lang=en&region=us"
+    }
+  ],
+  "weather": {
+    "$ref": "http://sports.core.api.espn.com/v2/weather/zip/89118?date=20240211&hour=18&lang=en&region=us",
+    "type": "Forecast",
+    "displayValue": "Sunny",
+    "zipCode": "89118",
+    "lastUpdated": "2024-02-01T23:06Z",
+    "windSpeed": 10,
+    "windDirection": "N",
+    "temperature": 60,
+    "highTemperature": 60,
+    "lowTemperature": 60,
+    "conditionId": "1",
+    "gust": 17,
+    "precipitation": 0,
+    "link": {
+      "language": "en-US",
+      "rel": ["89118"],
+      "href": "http://www.accuweather.com/en/us/allegiant-stadium-nv/89101/hourly-weather-forecast/209206_poi?day=11&hbhhour=15&lang=en-us",
+      "text": "Weather",
+      "shortText": "Weather",
+      "isExternal": true,
+      "isPremium": false
+    }
+  },
+  "league": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl?lang=en&region=us"
+  }
+}

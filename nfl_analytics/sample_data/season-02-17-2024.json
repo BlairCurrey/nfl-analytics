@@ -1,0 +1,168 @@
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023?lang=en&region=us",
+  "year": 2023,
+  "startDate": "2023-08-01T07:00Z",
+  "endDate": "2024-02-15T07:59Z",
+  "displayName": "2023",
+  "type": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2?lang=en&region=us",
+    "id": "2",
+    "type": 2,
+    "name": "Regular Season",
+    "abbreviation": "reg",
+    "year": 2023,
+    "startDate": "2023-09-07T07:00Z",
+    "endDate": "2024-01-11T07:59Z",
+    "hasGroups": false,
+    "hasStandings": true,
+    "hasLegs": false,
+    "groups": {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/groups?lang=en&region=us"
+    },
+    "weeks": {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks?lang=en&region=us"
+    },
+    "corrections": {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/corrections?lang=en&region=us"
+    },
+    "leaders": {
+      "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/leaders?lang=en&region=us"
+    },
+    "slug": "regular-season"
+  },
+  "types": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types?lang=en&region=us",
+    "count": 4,
+    "pageIndex": 1,
+    "pageSize": 4,
+    "pageCount": 1,
+    "items": [
+      {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1?lang=en&region=us",
+        "id": "1",
+        "type": 1,
+        "name": "Preseason",
+        "abbreviation": "pre",
+        "year": 2023,
+        "startDate": "2023-08-01T07:00Z",
+        "endDate": "2023-09-07T06:59Z",
+        "hasGroups": false,
+        "hasStandings": true,
+        "hasLegs": false,
+        "groups": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1/groups?lang=en&region=us"
+        },
+        "weeks": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1/weeks?lang=en&region=us"
+        },
+        "corrections": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1/corrections?lang=en&region=us"
+        },
+        "leaders": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/1/leaders?lang=en&region=us"
+        },
+        "slug": "preseason"
+      },
+      {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2?lang=en&region=us",
+        "id": "2",
+        "type": 2,
+        "name": "Regular Season",
+        "abbreviation": "reg",
+        "year": 2023,
+        "startDate": "2023-09-07T07:00Z",
+        "endDate": "2024-01-11T07:59Z",
+        "hasGroups": false,
+        "hasStandings": true,
+        "hasLegs": false,
+        "groups": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/groups?lang=en&region=us"
+        },
+        "weeks": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/weeks?lang=en&region=us"
+        },
+        "corrections": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/corrections?lang=en&region=us"
+        },
+        "leaders": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/leaders?lang=en&region=us"
+        },
+        "slug": "regular-season"
+      },
+      {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3?lang=en&region=us",
+        "id": "3",
+        "type": 3,
+        "name": "Postseason",
+        "abbreviation": "post",
+        "year": 2023,
+        "startDate": "2024-01-11T08:00Z",
+        "endDate": "2024-02-15T07:59Z",
+        "hasGroups": false,
+        "hasStandings": false,
+        "hasLegs": false,
+        "groups": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3/groups?lang=en&region=us"
+        },
+        "weeks": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3/weeks?lang=en&region=us"
+        },
+        "corrections": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3/corrections?lang=en&region=us"
+        },
+        "leaders": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/3/leaders?lang=en&region=us"
+        },
+        "slug": "post-season"
+      },
+      {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4?lang=en&region=us",
+        "id": "4",
+        "type": 4,
+        "name": "Off Season",
+        "abbreviation": "off",
+        "year": 2023,
+        "startDate": "2024-02-15T08:00Z",
+        "endDate": "2024-08-01T06:59Z",
+        "hasGroups": false,
+        "hasStandings": false,
+        "hasLegs": false,
+        "groups": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4/groups?lang=en&region=us"
+        },
+        "week": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4/weeks/1?lang=en&region=us",
+          "number": 1,
+          "startDate": "2024-02-15T08:00Z",
+          "endDate": "2024-08-01T06:59Z",
+          "text": "Week 1",
+          "rankings": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4/weeks/1/rankings?lang=en&region=us"
+          },
+          "events": {
+            "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4/weeks/1/events?lang=en&region=us"
+          }
+        },
+        "weeks": {
+          "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/4/weeks?lang=en&region=us"
+        },
+        "slug": "off-season"
+      }
+    ]
+  },
+  "rankings": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/rankings?lang=en&region=us"
+  },
+  "coaches": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/coaches?lang=en&region=us"
+  },
+  "athletes": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/athletes?lang=en&region=us"
+  },
+  "futures": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/futures?lang=en&region=us"
+  },
+  "leaders": {
+    "$ref": "http://sports.core.api.espn.com/v2/sports/football/leagues/nfl/seasons/2023/types/2/leaders?lang=en&region=us"
+  }
+}

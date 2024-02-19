@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,6 +26,38 @@ jobs:
 
       - name: Install dependencies with Poetry
         run: poetry install
+
+      # TODO: exit early but without error instead of exit1?
+      # So job is succesful but doesnt go past this step
+      # Or cancel with gh run cancel? https://stackoverflow.com/questions/60589373/how-to-force-job-to-exit-in-github-actions-step
+      - name: Check for matchups
+        id: check-matchups
+        # latest_matchups_file is the most recent matchup file by filename timestamp
+        # errors if matchup file is empty
+        run: |
+          poetry run python ./nfl_analytics/main.py --download-upcoming-matchups
+
+          latest_matchups_file=$(ls -1t nfl_analytics/assets/matchups-*.json | head -n 1)
+
+          echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
+
+          if [[ -f "$latest_matchups_file" ]]; then
+            echo "Latest matchups file: $latest_matchups_file"
+            matchups_count=$(jq length "$latest_matchups_file")
+
+            if [[ $matchups_count -eq 0 ]]; then
+              echo "Error: Latest matchups file is empty."
+              exit 0
+            fi
+          else
+            echo "Error: Latest matchups file not found."
+            exit 0
+          fi
+
+      - name: Test LATEST_MATCHUP_FILE var
+        env:
+          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
+        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
 
       - name: Download data
         run: poetry run python ./nfl_analytics/main.py --download
@@ -48,10 +79,18 @@ jobs:
       - name: Train Model
         run: poetry run python ./nfl_analytics/main.py --train
 
+      - name: Predict upcoming matchups
+        env:
+          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
+        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
+          # TODO: ensure prediction gets grouped properly (by timestamp or year/week)
+          # TODO: exclude matchups (sans predictions) from release or
+          # ensure it gets grouped properly (timestamp? change timestamp to year/week)
           files: ./nfl_analytics/assets/*
           tag_name: spread-predictor
           draft: true

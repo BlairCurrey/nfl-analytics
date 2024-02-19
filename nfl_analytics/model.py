@@ -1,5 +1,6 @@
-import os
-from typing import Tuple, Optional, Union
+import os, time, json
+from typing import Tuple, Optional, Union, List
+from dataclasses import dataclass, asdict
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -11,7 +12,17 @@ from joblib import dump
 from scipy.sparse import spmatrix
 from numpy import ndarray
 
-from nfl_analytics.config import FEATURES, ASSET_DIR
+from nfl_analytics.config import FEATURES, ASSET_DIR as ASSET_DIR_
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSET_DIR = os.path.join(SCRIPT_DIR, ASSET_DIR_)
+
+
+@dataclass
+class Prediction:
+    home_team: str
+    away_team: str
+    spread: float
 
 
 def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardScaler]:
@@ -55,17 +66,15 @@ def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardSc
 
 
 def save_model_and_scaler(
-    model: LinearRegression, scaler: StandardScaler, timestamp: str
+    model: LinearRegression, scaler: StandardScaler, timestamp: int
 ) -> None:
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    asset_dir = os.path.join(script_dir, ASSET_DIR)
-    os.makedirs(asset_dir, exist_ok=True)
+    os.makedirs(ASSET_DIR, exist_ok=True)
 
     model_filename = f"trained_model-{timestamp}.joblib"
     scaler_filename = f"trained_scaler-{timestamp}.joblib"
 
-    dump(model, os.path.join(asset_dir, model_filename))
-    dump(scaler, os.path.join(asset_dir, scaler_filename))
+    dump(model, os.path.join(ASSET_DIR, model_filename))
+    dump(scaler, os.path.join(ASSET_DIR, scaler_filename))
     print(f"Model saved to {model_filename}")
     print(f"Scaler saved to {scaler_filename}")
 
@@ -81,6 +90,17 @@ def predict(
     matchup_input = get_matchup_input(scaler, matchup)
 
     return model.predict(matchup_input)[0]
+
+
+def save_predictions(predictions: List[Prediction]) -> None:
+    os.makedirs(ASSET_DIR, exist_ok=True)
+
+    filepath = os.path.join(ASSET_DIR, f"predictions-{int(time.time())}.json")
+    with open(filepath, "w") as json_file:
+        predictions_dict = [asdict(p) for p in predictions]
+        json.dump(predictions_dict, json_file)
+
+    print(f"Predictions saved to {filepath}")
 
 
 def make_matchup(
