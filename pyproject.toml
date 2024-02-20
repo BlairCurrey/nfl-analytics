@@ -10,7 +10,6 @@ python = "^3.12"
 pandas = "^2.2.0"
 ipykernel = "^6.29.0"
 scikit-learn = "^1.4.0"
-fastparquet = "^2023.10.1"
 
 
 [build-system]
