@@ -2,7 +2,7 @@
 
 This repository contains a python cli application to train and use a model to predict the spread for upcoming NFL games. The model can be built and used for predictions locally using the cli app. In addition, a github action uses the cli app to train the model and publish the predictions to upcoming games as a [release found here](https://github.com/BlairCurrey/nfl-analytics/releases). The release contains other artifacts of the model building and prediction pipelines as well.
 
-Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](nfl-analytics/nfl_analytics/docs/training-data.md) for more background.
+Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](./nfl_analytics/docs/training-data.md) for more background.
 
 # Using
 
@@ -59,6 +59,6 @@ Alternatively, you can predict all upcoming games, which fetches upcoming matchu
 
 ## Updating the Model
 
-To refresh the data and retrain the model, you can download the latest year and re-train the model:
+To update the model, you can re-download the latest year and re-train the model:
 
     poetry run python nfl_analytics/main.py --download 2024 --train
