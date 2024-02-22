@@ -84,6 +84,7 @@ jobs:
           LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
         run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
 
+      # TODO: maybe use this instead? https://github.com/actions/upload-artifact
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
