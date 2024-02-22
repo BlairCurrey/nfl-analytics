@@ -1,6 +1,6 @@
 # Model
 
-The model itself is a simple linear regression model. This was intended as a starting point with many different avenues for improvement, but it's performance isnt too bad. The mean absolute error is around 10. This is the average amount the predicted spread is off by. I could not find an average difference for Vegas odds but according to [Vegas Always Knows? A Mathematical Deep Dive](https://www.theonlycolors.com/2020/9/29/21492301/vegas-always-knows-a-mathematical-deep-dive) the standard deviation of Vegas spreads are around 14. That is, 68% of games are within 14 points of the spread, and 32% are higher. Thus, a mean absolute error of 10 seems like we're in the ballpark even if not really competitive.
+The model itself is a simple linear regression model. This was intended as a starting point with many different avenues for improvement, but it's performance isnt too bad. The mean absolute error is around 10. This is the average amount the predicted spread is off by. I could not find an average difference for Vegas odds but according to [Vegas Always Knows? A Mathematical Deep Dive](https://www.theonlycolors.com/2020/9/29/21492301/vegas-always-knows-a-mathematical-deep-dive) the standard deviation of Vegas spreads is around 14. That is, 68% of games are within 14 points of the spread, and 32% are higher. Thus, a mean absolute error of 10 seems like we're in the ballpark even if not really competitive.
 
 ## Ideas for Improvement
 
