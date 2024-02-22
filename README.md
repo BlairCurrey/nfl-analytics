@@ -1,8 +1,14 @@
 # About
 
-This repository contains a python cli application to train and use a model to predict the spread for upcoming NFL games. The model can be built and used for predictions locally using the cli app. In addition, a github action uses the cli app to train the model and publish the predictions to upcoming games as a [release found here](https://github.com/BlairCurrey/nfl-analytics/releases). The release contains other artifacts of the model building and prediction pipelines as well.
+This repository contains a python cli application for predicting nfl spreads. The app trains a model from the latest available data and predicts upcoming matchups. In addition to running locally, a github action uses the cli app to train the model and publish the predictions for upcoming games to [this release](https://github.com/BlairCurrey/nfl-analytics/releases).
 
-Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](./nfl_analytics/docs/training-data.md) for more background.
+Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](./nfl_analytics/docs/training-data.md) for more details on each.
+
+This project exists for a few reasons:
+
+- I wanted to see how well a simplistic model would do at predicting the spread. I suspected this is a situation where something like 20% of the work could get you 80% of the results (known as the [Pareto Principle](https://en.wikipedia.org/wiki/Pareto_principle)), with "results" being Vegas-like spread prediction accuracy. I think this ended up being the case. See [the model doc](./nfl_analytics/docs/model.md) for more details.
+- I wanted to build an end-to-end training and prediction pipeline in github actions.
+- I wanted to compile an insightful dataset from atomic NFL play-by-play data. See the [training data doc](./nfl_analytics/docs/training-data.md) for more details on this.
 
 # Using
 
