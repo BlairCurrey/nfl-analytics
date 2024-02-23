@@ -63,6 +63,8 @@ Alternatively, you can predict all upcoming games, which fetches upcoming matchu
 
     poetry run python nfl_analytics/main.py --predict-all
 
+The prediction returns a float for the matchup relative to the home team. For example, if the `kc sf` prediction returns 1.3, that means it favors kc (the home team) by 1.4 points.
+
 ## Updating the Model
 
 To update the model, you can re-download the latest year and re-train the model:

@@ -152,30 +152,12 @@ score differential is wrong? look at first game. the number for the 2 teams dont
   - Find games where spread (included in dataset) is off and then train a model to classify them. Input can be the same team stats as the spread predictor, but the dataset will be limited to just the games that are off.
   - outlier definition tbd. perhaps abs(real spread - booky spread) is > 1 std deviation? which is 14-15 points according to some article I found (in resource section). In that case I'd expect ~68% of games to be "normal" and ~32% to be outliers.
   - Crazy idea: After implmeneting, go back and use this as a feature on the spread. Classify each games as (normal,outperform,underperform) and use that as a feature to train with. Perhaps this will be useful even if the accuracy is somewhat low?
+    - probably a bad idea. i think this will essentially leak training data into test data
 
 # Stray thoughts:
 
 - model name idea: caliper. (like measuring the "spread")
-- save model by pickeling with joblib/dump or save the configuration like:
-
-```python
- # Save essential components (assumes linreg - does it work the same for others?)
- coefficients = model.coef_
- intercept = model.intercept_
- # assumes using minmaxscaler (but maybe im not)
- scaler_params = {'min_values': scaler.min_, 'scale_values': scaler.scale_}
-
- # Recreate the model
- recreated_model = LinearRegression()
- recreated_model.coef_ = coefficients
- recreated_model.intercept_ = intercept
-
- # Recreate the scaler
- recreated_scaler = MinMaxScaler()
- recreated_scaler.min_ = scaler_params['min_values']
- recreated_scaler.scale_ = scaler_params['scale_values']
-```
-
+- save model by pickeling with joblib/dump or save the configuration
 - I think saving the configuration is probably better if I can.
 
 - What should the model's be guess _exactly_ and what does that say about how the teams are modeled in the input? the spread consists of 2 numbers (usually the inverse of each). 1 for each team. Maybe just predict the hometeam?
