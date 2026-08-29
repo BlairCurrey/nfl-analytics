@@ -1,6 +1,6 @@
 # About
 
-This repository contains a python cli application for predicting nfl spreads. The app trains a model from the latest available data and predicts upcoming matchups. In addition to running locally, a github action uses the cli app to train the model and publish the predictions for upcoming games to [this release](https://github.com/BlairCurrey/nfl-analytics/releases).
+This repository contains a python cli application for predicting nfl spreads. The app trains a model from the latest available data and predicts upcoming matchups. In addition to running locally, a github action runs the full pipeline weekly during the season and publishes the predictions for upcoming games to [this release](https://github.com/BlairCurrey/nfl-analytics/releases).
 
 Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](./nfl_analytics/docs/training-data.md) for more details on each.
 
@@ -14,59 +14,55 @@ This project exists for a few reasons:
 
 ## Pre-requisites
 
-- Python 3 (developed on 3.12)
-- Poetry (developed on 1.7.1)
+- [uv](https://docs.astral.sh/uv/) (python 3.12 and dependencies are managed for you)
 
-## Project Setup
+## Setup
 
-Clone this repository to your local machine:
+Clone this repository and install dependencies:
 
     git clone https://github.com/BlairCurrey/nfl-analytics.git
-
-Navigate to the repository:
-
     cd nfl-analytics
+    uv sync
 
-Install dependencies with Poetry:
+Then download the data and train a model with a single command:
 
-    poetry install
+    uv run nfl update
 
-At this point you should be able to run the cli app:
+This downloads all missing play-by-play data to `./nfl_analytics/data` and trains a model. Every training run is saved as a self-contained directory under `./nfl_analytics/assets/runs/<run_id>/` containing the model, scaler, running averages, and a manifest with the run's error metrics. Commands that need a model always load the latest complete run (or a specific one via `--run`), so artifacts from different training runs are never mixed.
 
-    poetry run python nfl_analytics/main.py --help
+Re-run `nfl update` any time to pick up the latest games and retrain.
 
-## Model Setup
+## Predicting games
 
-On initial setup, you will need to download all the data for training the model:
+Predict a specific matchup by giving the home and away team (in that order):
 
-    poetry run python nfl_analytics/main.py --download
+    uv run nfl predict kc sf
 
-This downloads all the raw data required to train the model to `./nfl_analytics/data`.
+The prediction returns a float spread relative to the home team. For example, if the `kc sf` prediction returns 1.3, the model favors kc (the home team) by 1.3 points. An exact list of team abbreviations can be found in `./nfl_analytics/config.py`.
 
-Then you can train the model:
+Or fetch this week's matchups and predict all of them, saving the predictions to the run directory:
 
-    poetry run python nfl_analytics/main.py --train
+    uv run nfl predict-upcoming
 
-This builds and saves the training dataset and then trains the model. The model and scaler used in training and the training dataset are saved to `./nfl_analytics/assets`.
+## All commands
 
-Now you can use the model to predict games.
+Run `uv run nfl --help` for the full CLI reference.
 
-## Predicting Games
+| Command            | What it does                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `update`           | Download missing/current season data and train a fresh model. First-time setup + weekly refresh. |
+| `predict HOME AWAY`| Predict the spread for a single matchup.                                                        |
+| `predict-upcoming` | Fetch this week's matchups and predict every spread.                                            |
+| `download [years]` | Just download raw play-by-play data.                                                            |
+| `train`            | Just train from already-downloaded data.                                                        |
+| `run-pipeline`     | Full weekly pipeline used by the github action. Exits cleanly during the offseason.             |
 
-Provide the home and away team (in that order) to `--predict` to predict a specific upcoming game:
+## Automation
 
-    poetry run python nfl_analytics/main.py --predict kc sf
+`.github/workflows/train-spread-predictor.yaml` runs `nfl run-pipeline` every Tuesday during the season: it fetches upcoming matchups (exiting early if there are none), downloads the latest data (cached between runs), trains a fresh model, predicts the matchups, and publishes everything to the [spread-predictor release](https://github.com/BlairCurrey/nfl-analytics/releases). It can also be triggered manually from the Actions tab.
 
-An exact list list of team abbreviations can be found in `./nfl_analytics/config.py`.
+## Development
 
-Alternatively, you can predict all upcoming games, which fetches upcoming matchups from an external api and saves the predictions to `./nfl_analytics/assets`:
+Run the tests with:
 
-    poetry run python nfl_analytics/main.py --predict-all
-
-The prediction returns a float for the matchup relative to the home team. For example, if the `kc sf` prediction returns 1.3, that means it favors kc (the home team) by 1.4 points.
-
-## Updating the Model
-
-To update the model, you can re-download the latest year and re-train the model:
-
-    poetry run python nfl_analytics/main.py --download 2024 --train
+    uv run pytest

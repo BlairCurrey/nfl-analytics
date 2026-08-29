@@ -1,6 +1,12 @@
 DATA_DIR = "data"
 ASSET_DIR = "assets"
 START_YEAR = 1999
+MANIFEST_FILENAME = "manifest.json"
+MODEL_FILENAME = "model.joblib"
+SCALER_FILENAME = "scaler.joblib"
+RUNNING_AVG_FILENAME = "running_average.csv.gz"
+MATCHUPS_FILENAME = "matchups.json"
+PREDICTIONS_FILENAME = "predictions.json"
 FEATURES = [
     "away_rushing_avg",
     "home_rushing_avg",
@@ -56,8 +62,3 @@ TEAM_ABBR_MAP = {
     "LAR": "LA",
     "WSH": "WAS",
 }
-
-RUNNING_AVG_DF_FILENAME = "running_average"
-TRAINED_MODEL_FILENAME = "trained_model"
-TRAINED_SCALER_FILENAME = "trained_scaler"
-MATCHUPS_FILENAME = "matchups"

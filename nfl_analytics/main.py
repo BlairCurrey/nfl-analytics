@@ -1,241 +1,250 @@
 import argparse
+import sys
 import time
-from typing import List
-
-import pandas as pd
-from joblib import load
+from typing import List, Optional
 
 from nfl_analytics.data import (
     download_data,
+    default_years,
+    get_downloaded_years,
+    latest_season_year,
     load_dataframe_from_raw,
-    save_dataframe,
 )
 from nfl_analytics.model import (
     train_model,
     predict,
-    save_model_and_scaler,
     Prediction,
-    save_predictions,
 )
 from nfl_analytics.dataframes import (
     build_running_avg_dataframe,
     build_training_dataframe,
 )
 from nfl_analytics.schedule import (
+    Matchup,
     get_upcoming_matchups,
-    save_upcoming_matchups,
     load_matchups,
 )
+from nfl_analytics import runs
 from nfl_analytics.utils import (
     is_valid_year,
-    get_latest_timestamped_filepath,
     normalize_team_abbr,
 )
 from nfl_analytics.config import (
     TEAMS,
-    RUNNING_AVG_DF_FILENAME,
-    TRAINED_MODEL_FILENAME,
-    TRAINED_SCALER_FILENAME,
     MATCHUPS_FILENAME,
+    PREDICTIONS_FILENAME,
 )
 
 
-# ROUGH CLI docs:
-# --download: optional. takes list of years. or if empty, defaults to downloading all play-by-play data years. usage: python main.py --download 2021 2022
-# --download-upcoming-matchups: optional. downloads the upcoming matchups. can be used by --predict-upcoming. usage: python main.py --download-upcoming-matchups
-# --train: optional. if present, trains the model. usage: python main.py --train
-# --predict: optional. takes two arguments, home team and away team. usage: python main.py --predict "CHI" "MIN"
-# --predict-upcoming: optional. fetches and predicts all upcoming matchups. usage: python main.py --predict-upcoming
-
-
-def _load_df_running_avg():
-    try:
-        latest_running_avg_filename = get_latest_timestamped_filepath(
-            RUNNING_AVG_DF_FILENAME, ".csv.gz"
-        )
-    except FileNotFoundError:
-        print("No running average dataframe found. Please run with --train first.")
-        exit(1)
-    return pd.read_csv(latest_running_avg_filename, low_memory=False)
-
-
-def _load_model_and_scaler():
-    try:
-        latest_model_filepath = get_latest_timestamped_filepath(
-            TRAINED_MODEL_FILENAME, ".joblib"
-        )
-        latest_scaler_filepath = get_latest_timestamped_filepath(
-            TRAINED_SCALER_FILENAME, ".joblib"
-        )
-    except FileNotFoundError:
-        print("No trained model and/or scaler found. Please run with --train first.")
-        exit(1)
-
-    print(
-        f"Loading model and scaler from {latest_model_filepath} and {latest_scaler_filepath}"
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="nfl",
+        description="Predict NFL spreads.",
+        epilog="Typical usage: `nfl update` once, then `nfl predict KC SF`.",
     )
-    return load(latest_model_filepath), load(latest_scaler_filepath)
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Manage NFL Spread Predictor Pipeline")
-    parser.add_argument(
-        "--download",
+    download_parser = subparsers.add_parser(
+        "download", help="Download raw play-by-play data."
+    )
+    download_parser.add_argument(
+        "years",
         nargs="*",
         type=int,
         metavar="year",
-        help="Download data for the specified years. The year corresponds to the season start.",
+        help="Season start years to download. Defaults to every season since 1999.",
     )
-    parser.add_argument(
-        "--download-upcoming-matchups",
-        action="store_true",
-        help="Downloads the upcoming matchups. Downloaded machup data can be used by --predict-upcoming",
+
+    subparsers.add_parser(
+        "train",
+        help="Train a model from downloaded data. Saves a new run to assets/runs/.",
     )
-    parser.add_argument(
-        "--train",
-        action="store_true",
-        help="Train the model using the downloaded data.",
+
+    subparsers.add_parser(
+        "update",
+        help="Download any missing/current season data and train a fresh model. "
+        "Handles first-time setup and weekly refreshes.",
     )
-    parser.add_argument(
-        "--predict",
-        nargs=2,
-        metavar=("home_team", "away_team"),
-        help="Specify the home and away teams for prediction.",
+
+    predict_parser = subparsers.add_parser(
+        "predict", help="Predict the spread for a single matchup."
     )
-    parser.add_argument(
-        "--predict-upcoming",
-        nargs="*",
-        metavar="matchups_path",
-        help="Predict outcomes for all upcoming matchups. Fetches the latest matchups with no argument values. Optionally provide a path to matchups JSON or use 'latest' to get the latest saved matchups.",
+    predict_parser.add_argument("home_team", help="Home team abbreviation, e.g. KC")
+    predict_parser.add_argument("away_team", help="Away team abbreviation, e.g. SF")
+    predict_parser.add_argument(
+        "--run",
+        metavar="run_id",
+        help="Training run to use (defaults to the latest).",
     )
-    args = parser.parse_args()
 
-    if args.download is not None:
-        if args.download:
-            year_set = set(args.download)
-            invalid_years = [year for year in year_set if not is_valid_year(year)]
+    predict_upcoming_parser = subparsers.add_parser(
+        "predict-upcoming",
+        help="Fetch this week's matchups and predict every spread. "
+        "Saves matchups and predictions to the run directory.",
+    )
+    predict_upcoming_parser.add_argument(
+        "--matchups",
+        metavar="path",
+        help="Predict from a saved matchups JSON file instead of fetching.",
+    )
+    predict_upcoming_parser.add_argument(
+        "--run",
+        metavar="run_id",
+        help="Training run to use (defaults to the latest).",
+    )
 
-            if invalid_years:
-                print(f"Invalid year(s) provided: {invalid_years}. No data downloaded.")
-            else:
-                download_data(year_set)
-        else:
-            download_data()
+    subparsers.add_parser(
+        "run-pipeline",
+        help="Full weekly pipeline: fetch matchups, update data, train, and "
+        "predict. Exits cleanly when there are no upcoming games (offseason).",
+    )
 
-    if args.download_upcoming_matchups:
-        print("Downloading upcoming matchups...")
-        matchups = get_upcoming_matchups()
-        save_upcoming_matchups(matchups)
+    return parser
 
-    if args.train:
-        start_time = time.time()
-        try:
-            print("Loading dataframe...")
-            df_raw = load_dataframe_from_raw()
-        except FileNotFoundError as e:
-            print(f"Error loading data: {e}")
-            print("Please run with --download first.")
-            exit(1)
-        end_time = time.time()
-        print(f"Loaded dataframe in {end_time - start_time} seconds")
 
-        print("Training model...")
+def run_download(years: List[int]) -> None:
+    if years:
+        invalid_years = [year for year in set(years) if not is_valid_year(year)]
 
-        # -- Maybe require filepath to use saved version? --
-        # This wont pick on updated data (downlaoded new data but still have combined, so it will use that)
-        # Save combined dataframe to disk
-        # save_dir = os.path.join("data", "combined")
-        # os.makedirs(save_dir, exist_ok=True)
-        # save_path = os.path.join(save_dir, "play_by_play_combined.parquet.gzip")
-        # df_raw.to_parquet(save_path, compression="gzip")
+        if invalid_years:
+            sys.exit(f"Invalid year(s) provided: {invalid_years}. No data downloaded.")
 
-        timestamp = int(time.time())
+        download_data(set(years))
+    else:
+        download_data()
 
-        df_running_avg = build_running_avg_dataframe(df_raw)
-        save_dataframe(df_running_avg, f"{RUNNING_AVG_DF_FILENAME}-{timestamp}")
 
-        df_training = build_training_dataframe(df_running_avg)
-        model, scaler = train_model(df_training)
-
-        save_model_and_scaler(model, scaler, timestamp)
-
-    if args.predict:
-        # TODO: this will silently predict based off old data if thats all we have.
-        # Perhaps I should require the week/year in the predict fn? Or at least log
-        # year/week in predict? Or maybe aligning everything by timestamp will resolve this?
-        home_team = normalize_team_abbr(args.predict[0].upper())
-        away_team = normalize_team_abbr(args.predict[1].upper())
-
-        for team in [home_team, away_team]:
-            if team not in TEAMS:
-                print(f"Invalid team: {team}")
-                exit(1)
-
-        if home_team == away_team:
-            print("Home and away team cannot be the same.")
-            exit(1)
-
-        model, scaler = _load_model_and_scaler()
-        df_running_avg = _load_df_running_avg()
-        predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
-
-        print(
-            f"Predicted spread for {home_team} (home) vs {away_team} (away): {predicted_spread}"
+def run_train() -> str:
+    if not get_downloaded_years():
+        sys.exit(
+            "No downloaded data found. Run `nfl download` first, "
+            "or `nfl update` to download and train in one step."
         )
 
-    if args.predict_upcoming is not None:
-        matchups = None
+    start_time = time.time()
+    print("Loading dataframe...")
+    df_raw = load_dataframe_from_raw()
+    print(f"Loaded dataframe in {time.time() - start_time:.1f} seconds")
 
-        if args.predict_upcoming:
-            path_or_latest = args.predict_upcoming[0]
+    print("Training model...")
+    df_running_avg = build_running_avg_dataframe(df_raw)
+    df_training = build_training_dataframe(df_running_avg)
+    model, scaler, metrics = train_model(df_training)
 
-            if path_or_latest == "latest":
-                print("Loading latest matchups")
-                try:
-                    filepath = get_latest_timestamped_filepath(
-                        MATCHUPS_FILENAME, ".json"
-                    )
-                    matchups = load_matchups(filepath)
-                except FileNotFoundError:
-                    print("No matchup file found.")
-                    exit(1)
-            else:
-                print("Loading matchups from specified path:", path_or_latest)
-                try:
-                    matchups = load_matchups(path_or_latest)
-                except FileNotFoundError:
-                    print("No matchup file found.")
-                    exit(1)
+    return runs.save_run(model, scaler, df_running_avg, metrics)
+
+
+def run_update() -> str:
+    downloaded = get_downloaded_years()
+    missing = set(default_years()) - downloaded
+    # Always re-download the current season: its file grows as games are played
+    to_download = sorted(missing | {latest_season_year()})
+
+    print(f"Downloading season(s): {to_download}")
+    download_data(to_download)
+
+    return run_train()
+
+
+def _load_run_or_exit(run_id: Optional[str]):
+    try:
+        return runs.load_run(run_id)
+    except runs.RunNotFoundError as e:
+        sys.exit(str(e))
+
+
+def _validate_matchup(home_team: str, away_team: str) -> tuple[str, str]:
+    home_team = normalize_team_abbr(home_team)
+    away_team = normalize_team_abbr(away_team)
+
+    for team in [home_team, away_team]:
+        if team not in TEAMS:
+            sys.exit(f"Invalid team: {team}. See TEAMS in nfl_analytics/config.py.")
+
+    if home_team == away_team:
+        sys.exit("Home and away team cannot be the same.")
+
+    return home_team, away_team
+
+
+def run_predict(home_team: str, away_team: str, run_id: Optional[str]) -> None:
+    home_team, away_team = _validate_matchup(home_team, away_team)
+
+    model, scaler, df_running_avg, _ = _load_run_or_exit(run_id)
+    predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
+
+    print(
+        f"Predicted spread for {home_team} (home) vs {away_team} (away): "
+        f"{predicted_spread}"
+    )
+
+
+def run_predict_upcoming(
+    matchups_path: Optional[str],
+    run_id: Optional[str],
+    matchups: Optional[List[Matchup]] = None,
+) -> None:
+    if matchups is None:
+        if matchups_path:
+            print(f"Loading matchups from {matchups_path}")
+            try:
+                matchups = load_matchups(matchups_path)
+            except FileNotFoundError:
+                sys.exit(f"No matchup file found at {matchups_path}.")
         else:
-            print("Fetching latest matchups")
+            print("Fetching upcoming matchups...")
             matchups = get_upcoming_matchups()
 
-        if not matchups:
-            print("No matchups found.")
-            exit(0)
+    if not matchups:
+        print("No upcoming matchups found.")
+        return
 
-        df_running_avg = _load_df_running_avg()
-        model, scaler = _load_model_and_scaler()
+    model, scaler, df_running_avg, manifest = _load_run_or_exit(run_id)
 
-        predictions: List[Prediction] = []
+    predictions: List[Prediction] = []
 
-        for matchup in matchups:
-            home_team, away_team = normalize_team_abbr(
-                matchup.home_team
-            ), normalize_team_abbr(matchup.away_team)
+    for matchup in matchups:
+        home_team, away_team = _validate_matchup(matchup.home_team, matchup.away_team)
+        predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
+        predictions.append(Prediction(home_team, away_team, predicted_spread))
+        print(
+            f"{home_team} (home) vs {away_team} (away): {predicted_spread:.1f}"
+        )
 
-            for team in [home_team, away_team]:
-                if team not in TEAMS:
-                    print(f"Invalid team: {team}")
-                    exit(1)
+    runs.save_run_json(manifest["run_id"], MATCHUPS_FILENAME, matchups)
+    runs.save_run_json(manifest["run_id"], PREDICTIONS_FILENAME, predictions)
 
-            predicted_spread = predict(
-                model, scaler, df_running_avg, home_team, away_team
-            )
-            predictions.append(Prediction(home_team, away_team, predicted_spread))
 
-            print(predictions)
-            save_predictions(predictions)
+def run_pipeline() -> None:
+    # Check for matchups first: during the offseason there is nothing to
+    # predict, so skip the expensive download/train steps entirely.
+    print("Fetching upcoming matchups...")
+    matchups = get_upcoming_matchups()
+
+    if not matchups:
+        print("No upcoming matchups (offseason?). Nothing to do.")
+        return
+
+    print(f"Found {len(matchups)} upcoming matchup(s).")
+    run_id = run_update()
+    run_predict_upcoming(None, run_id, matchups=matchups)
+
+
+def main():
+    args = build_parser().parse_args()
+
+    if args.command == "download":
+        run_download(args.years)
+    elif args.command == "train":
+        run_train()
+    elif args.command == "update":
+        run_update()
+    elif args.command == "predict":
+        run_predict(args.home_team, args.away_team, args.run)
+    elif args.command == "predict-upcoming":
+        run_predict_upcoming(args.matchups, args.run)
+    elif args.command == "run-pipeline":
+        run_pipeline()
 
 
 if __name__ == "__main__":

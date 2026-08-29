@@ -1,6 +1,5 @@
-import os, time, json
-from typing import Tuple, Optional, Union, List
-from dataclasses import dataclass, asdict
+from typing import Tuple, Optional, Union
+from dataclasses import dataclass
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -8,14 +7,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
-from joblib import dump
 from scipy.sparse import spmatrix
 from numpy import ndarray
 
-from nfl_analytics.config import FEATURES, ASSET_DIR as ASSET_DIR_
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSET_DIR = os.path.join(SCRIPT_DIR, ASSET_DIR_)
+from nfl_analytics.config import FEATURES
 
 
 @dataclass
@@ -25,7 +20,9 @@ class Prediction:
     spread: float
 
 
-def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardScaler]:
+def train_model(
+    df_training: pd.DataFrame,
+) -> Tuple[LinearRegression, StandardScaler, dict[str, float]]:
     # Drop week 1 because is all NaN
     df_train = df_training[df_training["week"] > 1]
 
@@ -62,21 +59,7 @@ def train_model(df_training: pd.DataFrame) -> Tuple[LinearRegression, StandardSc
     print(f"Mean Squared Error: {mse}")
     print(f"Mean Absolute Error: {mae}")
 
-    return model, scaler
-
-
-def save_model_and_scaler(
-    model: LinearRegression, scaler: StandardScaler, timestamp: int
-) -> None:
-    os.makedirs(ASSET_DIR, exist_ok=True)
-
-    model_filename = f"trained_model-{timestamp}.joblib"
-    scaler_filename = f"trained_scaler-{timestamp}.joblib"
-
-    dump(model, os.path.join(ASSET_DIR, model_filename))
-    dump(scaler, os.path.join(ASSET_DIR, scaler_filename))
-    print(f"Model saved to {model_filename}")
-    print(f"Scaler saved to {scaler_filename}")
+    return model, scaler, {"mean_squared_error": mse, "mean_absolute_error": mae}
 
 
 def predict(
@@ -90,17 +73,6 @@ def predict(
     matchup_input = get_matchup_input(scaler, matchup)
 
     return model.predict(matchup_input)[0]
-
-
-def save_predictions(predictions: List[Prediction]) -> None:
-    os.makedirs(ASSET_DIR, exist_ok=True)
-
-    filepath = os.path.join(ASSET_DIR, f"predictions-{int(time.time())}.json")
-    with open(filepath, "w") as json_file:
-        predictions_dict = [asdict(p) for p in predictions]
-        json.dump(predictions_dict, json_file)
-
-    print(f"Predictions saved to {filepath}")
 
 
 def make_matchup(
@@ -117,10 +89,6 @@ def make_matchup(
 
     if year is None:
         year = df["year"].max()
-
-    if week is None:
-        last_week = df[df["year"] == year]["week"].max()
-        week = last_week
 
     # df_running_avg include running averages prior to that week, and data about
     # that week itself: teams, final scores, etc.). Basically (and literally at
@@ -142,18 +110,16 @@ def make_matchup(
         "mean_epa_avg",
     ]
 
-    # Select data for the specified week, home team, and away team in the specified year
+    # Each team's averages come from its own latest available week (unless a
+    # specific week is given). Teams don't all have rows for the same weeks:
+    # byes, and playoff rounds where only some teams play.
     home_data = (
-        df[(df["year"] == year) & (df["week"] == week) & (df["team"] == home_team)][
-            cols
-        ]
+        _team_week_row(df, home_team, year, week, cols)
         .add_prefix("home_")
         .reset_index(drop=True)
     )
     away_data = (
-        df[(df["year"] == year) & (df["week"] == week) & (df["team"] == away_team)][
-            cols
-        ]
+        _team_week_row(df, away_team, year, week, cols)
         .add_prefix("away_")
         .reset_index(drop=True)
     )
@@ -161,11 +127,35 @@ def make_matchup(
     return pd.concat([home_data, away_data], axis=1)
 
 
+def _team_week_row(
+    df: pd.DataFrame,
+    team: str,
+    year: int,
+    week: Optional[int],
+    cols: list[str],
+) -> pd.DataFrame:
+    team_rows = df[(df["year"] == year) & (df["team"] == team)]
+
+    if team_rows.empty:
+        raise ValueError(f"No stats found for {team} in the {year} season.")
+
+    if week is None:
+        week = team_rows["week"].max()
+
+    row = team_rows[team_rows["week"] == week]
+
+    if row.empty:
+        raise ValueError(f"No stats found for {team} in week {week} of {year}.")
+
+    print(f"Using {team} averages through {year} week {week}")
+    return row[cols]
+
+
 def get_matchup_input(
     scaler: StandardScaler, matchup: pd.DataFrame
 ) -> Union[ndarray, spmatrix]:
-    reshaped_matchup = matchup[FEATURES].values.reshape(1, -1)
-    return scaler.transform(reshaped_matchup)
+    # Keep feature names so the scaler sees the same columns it was fit with
+    return scaler.transform(matchup[FEATURES])
 
 
 if __name__ == "__main__":
@@ -176,7 +166,7 @@ if __name__ == "__main__":
 
     df_running_avg = build_running_avg_dataframe()
     df_training = build_training_dataframe()
-    model, scaler = train_model(df_training)
+    model, scaler, metrics = train_model(df_training)
     print(make_matchup(df_running_avg, "KC", "SF").tail())
     # first team is home but this is superbowl so neither is technically home
     # week 22 (? its the superbowl) 2023 (2023 SEASON, year is 2024)

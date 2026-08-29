@@ -3,18 +3,13 @@ Handles getting the data for upcoming matchups.
 """
 
 import json
-import os
-import time
 from datetime import datetime
 import urllib.request
 from typing import Any, Dict, List
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
-from nfl_analytics.utils import ASSET_DIR as ASSET_DIR_, normalize_team_abbr
-from nfl_analytics.config import MATCHUPS_FILENAME
+from nfl_analytics.utils import normalize_team_abbr
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSET_DIR = os.path.join(SCRIPT_DIR, ASSET_DIR_)
 BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
 
 
@@ -41,17 +36,6 @@ class SeasonPosition:
 # it will be an entry in the calendar among the playoffs in postseason.
 # I guess it will also be in the events and we might have trouble forming the machtup (not in the list of team codes)
 # Not sure I simply want to skip the week in case its not its OWN week sometime.
-
-
-def save_upcoming_matchups(matchups: List[Matchup]) -> None:
-    os.makedirs(ASSET_DIR, exist_ok=True)
-
-    filepath = os.path.join(ASSET_DIR, f"{MATCHUPS_FILENAME}-{int(time.time())}.json")
-    with open(filepath, "w") as json_file:
-        matchups_dict = [asdict(p) for p in matchups]
-        json.dump(matchups_dict, json_file)
-
-    print(f"Upcoming matchups saved to {filepath}")
 
 
 def load_matchups(filepath: str) -> List[Matchup]:
@@ -140,9 +124,9 @@ def _get_upcoming_event_urls() -> List[str]:
     season_position = _get_season_position(calendar_data)
 
     # only get events for regular season and postseason, but not regular season week 1
-    if season_position not in [SeasonType.REGULAR, SeasonType.POSTSEASON]:
+    if season_position.type not in [SeasonType.REGULAR, SeasonType.POSTSEASON]:
         return []
-    if season_position is SeasonType.REGULAR and season_position.week == "1":
+    if season_position.type is SeasonType.REGULAR and season_position.week == "1":
         return []
 
     # Get's the current season including the current week

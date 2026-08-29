@@ -1,12 +1,14 @@
 name: NFL Spread Predictor Pipeline
 
 on:
-  # schedule:
-  #   - cron: '0 0 * * 2'
+  schedule:
+    # Tuesdays 10:00 UTC: after Monday Night Football, before the next week's games.
+    # During the offseason `nfl run-pipeline` finds no matchups and exits cleanly.
+    - cron: "0 10 * * 2"
   workflow_dispatch:
 
 jobs:
-  build:
+  predict:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,57 +16,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.12
+          enable-cache: true
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # Restores the most recent play-by-play data so `nfl run-pipeline` only
+      # downloads missing seasons and the in-progress season. The key never
+      # matches so a fresh cache is saved after every run.
+      - name: Cache play-by-play data
+        uses: actions/cache@v4
         with:
-          version: 1.7.1
+          path: nfl_analytics/data
+          key: pbp-data-${{ github.run_id }}
+          restore-keys: |
+            pbp-data-
 
-      - name: Install dependencies with Poetry
-        run: poetry install
-
-      # TODO: exit early but without error instead of exit1?
-      # So job is succesful but doesnt go past this step
-      # Or cancel with gh run cancel? https://stackoverflow.com/questions/60589373/how-to-force-job-to-exit-in-github-actions-step
-      - name: Check for matchups
-        id: check-matchups
-        # latest_matchups_file is the most recent matchup file by filename timestamp
-        # errors if matchup file is empty
-        run: |
-          poetry run python ./nfl_analytics/main.py --download-upcoming-matchups
-
-          latest_matchups_file=$(ls -1t nfl_analytics/assets/matchups-*.json | head -n 1)
-
-          echo "LATEST_MATCHUP_FILE=$latest_matchups_file" >> "$GITHUB_OUTPUT"
-
-          if [[ -f "$latest_matchups_file" ]]; then
-            echo "Latest matchups file: $latest_matchups_file"
-            matchups_count=$(jq length "$latest_matchups_file")
-
-            if [[ $matchups_count -eq 0 ]]; then
-              echo "Error: Latest matchups file is empty."
-              exit 0
-            fi
-          else
-            echo "Error: Latest matchups file not found."
-            exit 0
-          fi
-
-      - name: Test LATEST_MATCHUP_FILE var
-        env:
-          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
-        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
-
-      - name: Download data
-        run: poetry run python ./nfl_analytics/main.py --download
-
-      # Necessary for train step
+      # Training loads every season into one dataframe and can exhaust runner memory
       # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
-      # https://stackoverflow.com/questions/71590851/r8-is-causing-gradle-daemon-to-vanish-on-github-hosted-action-runner/76921482#76921482
       - name: Increase swapfile
         run: |
           df -h
@@ -75,33 +47,38 @@ jobs:
           sudo swapon /swapfile
           sudo swapon --show
 
-      # Seperated from Download data to make debugging easier
-      - name: Train Model
-        run: poetry run python ./nfl_analytics/main.py --train
+      - name: Run weekly pipeline
+        run: uv run nfl run-pipeline
 
-      - name: Predict upcoming matchups
-        env:
-          LATEST_MATCHUP_FILE: ${{ steps.check-matchups.outputs.LATEST_MATCHUP_FILE }}
-        run: poetry run python ./nfl_analytics/main.py --predict-upcoming $LATEST_MATCHUP_FILE
+      - name: Locate latest run
+        id: latest-run
+        run: |
+          run_dir=$(ls -d nfl_analytics/assets/runs/*/ 2>/dev/null | sort | tail -n 1)
 
-      # TODO: maybe use this instead? https://github.com/actions/upload-artifact
-      - name: Create release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+          if [[ -n "$run_dir" && -f "$run_dir/predictions.json" ]]; then
+            echo "Latest run with predictions: $run_dir"
+            echo "dir=$run_dir" >> "$GITHUB_OUTPUT"
+            echo "has_predictions=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No predictions produced (offseason?). Skipping release."
+            echo "has_predictions=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish predictions release
+        if: steps.latest-run.outputs.has_predictions == 'true'
+        uses: softprops/action-gh-release@v2
         with:
-          # TODO: ensure prediction gets grouped properly (by timestamp or year/week)
-          # TODO: exclude matchups (sans predictions) from release or
-          # ensure it gets grouped properly (timestamp? change timestamp to year/week)
-          files: ./nfl_analytics/assets/*
+          files: ${{ steps.latest-run.outputs.dir }}*
           tag_name: spread-predictor
-          draft: true
-          # Changes to body here dont seem to update existing release
           body: |
-            This release includes the trained model, scaler, and compressed CSV file needed for predictions:
+            Latest trained model and spread predictions for upcoming games,
+            published automatically every week during the season.
 
-            The machine learning model saved using joblib.
-            - **trained_model-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
-            - **trained_scaler-[timstamp].joblib:** The scaler pickled with joblib for scaling matchup inputs.
-            - **running_average-[timstamp].csv.gz:** Running averages used to form matchup inputs
+            - **predictions.json:** predicted spreads relative to the home team
+            - **matchups.json:** the upcoming matchups that were predicted
+            - **model.joblib / scaler.joblib:** the trained model and input scaler
+            - **running_average.csv.gz:** running averages used to form matchup inputs
+            - **manifest.json:** run id, timestamp, and test-set error metrics
 
-            To make predictions, use these with the main.py --predict command on asset sets with matching timestamps.
+            All files come from the same training run and can be used together
+            with `nfl predict`.

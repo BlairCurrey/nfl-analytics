@@ -3,17 +3,19 @@ Handles fetching and loading the play by play data. Essentially,
 everything before tranforming it.
 """
 
+import datetime
 import urllib.request
 from urllib.error import HTTPError
 import os
 import sqlite3
-from typing import Iterable
+from typing import Iterable, Optional
 
 import pandas as pd
 
 from nfl_analytics.config import (
     DATA_DIR as DATA_DIR_,
     ASSET_DIR as ASSET_DIR_,
+    START_YEAR,
 )
 
 
@@ -22,7 +24,32 @@ ASSET_DIR = os.path.join(THIS_DIR, ASSET_DIR_)
 DATA_DIR = os.path.join(THIS_DIR, DATA_DIR_)
 
 
-def download_data(years: Iterable[int] = range(1999, 2024)) -> None:
+def latest_season_year() -> int:
+    """The most recent season with data available. Seasons start in September;
+    before then, the current calendar year's season hasn't produced data yet."""
+    today = datetime.date.today()
+    return today.year if today.month >= 9 else today.year - 1
+
+
+def default_years() -> range:
+    return range(START_YEAR, latest_season_year() + 1)
+
+
+def get_downloaded_years() -> set[int]:
+    if not os.path.isdir(DATA_DIR):
+        return set()
+
+    return {
+        get_year_from_filename(filename)
+        for filename in os.listdir(DATA_DIR)
+        if filename.startswith("play_by_play_") and filename.endswith(".csv.gz")
+    }
+
+
+def download_data(years: Optional[Iterable[int]] = None) -> None:
+    if years is None:
+        years = default_years()
+
     os.makedirs(DATA_DIR, exist_ok=True)
 
     for year in years:
@@ -42,7 +69,10 @@ def download_data(years: Iterable[int] = range(1999, 2024)) -> None:
             )
 
 
-def load_dataframe_from_remote(years: range = range(1999, 2024)) -> pd.DataFrame:
+def load_dataframe_from_remote(years: Optional[Iterable[int]] = None) -> pd.DataFrame:
+    if years is None:
+        years = default_years()
+
     combined_df = pd.DataFrame()
 
     for year in years:
