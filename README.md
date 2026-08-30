@@ -55,7 +55,14 @@ Run `uv run nfl --help` for the full CLI reference.
 | `predict-upcoming` | Fetch this week's matchups and predict every spread.                                            |
 | `download [years]` | Just download raw play-by-play data.                                                            |
 | `train`            | Just train from already-downloaded data.                                                        |
+| `evaluate`         | Score the model against naive and Vegas baselines on held-out seasons (`--test-since`, default 2023). |
 | `run-pipeline`     | Full weekly pipeline used by the github action. Exits cleanly during the offseason.             |
+
+## Evaluating the model
+
+    uv run nfl evaluate
+
+This trains on seasons before a cutoff (default 2023) and scores predictions on the held-out seasons against two fixed benchmarks: a naive constant (always predicting the average home-field advantage) and the Vegas closing spread, which comes from the `spread_line` column already present in the nflverse play-by-play data. Use this to measure whether a model change actually helps — the training MAE printed by `train` mixes eras and is not a fair benchmark.
 
 ## Automation
 

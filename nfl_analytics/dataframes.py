@@ -5,10 +5,28 @@ Handles everything between getting the data and training/using the model.
 
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from pandas.core.groupby.generic import DataFrameGroupBy
 
+from nfl_analytics.config import PRIOR_PSEUDO_GAMES
 from nfl_analytics.data import load_dataframe_from_raw
+
+# per-game stat -> name of its running-average column
+STAT_TO_AVG = {
+    "rushing_yards": "rushing_avg",
+    "passing_yards": "passing_avg",
+    "yards_gained": "yards_gained_avg",
+    "sack_yards": "sack_yards_avg",
+    "passing_yards_defense": "passing_yards_defense_avg",
+    "rushing_yards_defense": "rushing_yards_defense_avg",
+    "yards_gained_defense": "yards_gained_defense_avg",
+    "sack_yards_defense": "sack_yards_defense_avg",
+    "score_differential_post": "score_differential_post_avg",
+    "points_scored": "points_scored_avg",
+    "points_allowed": "points_allowed_avg",
+    "mean_epa": "mean_epa_avg",
+}
 
 
 def build_training_dataframe(
@@ -67,19 +85,41 @@ def build_training_dataframe(
     )
 
 
-def build_running_avg_dataframe(df_raw: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+def build_running_avg_dataframe(
+    df_raw: Optional[pd.DataFrame] = None,
+    prior_weight: int = PRIOR_PSEUDO_GAMES,
+) -> pd.DataFrame:
     """
-    Builds a dataframe with weakly running averages for each team by year.
-    Used to create prediction inputs and build the training dataset
+    Builds a dataframe with weekly running averages for each team by year.
+    Used to create prediction inputs and build the training dataset.
+
+    Averages exclude the current game (only prior games inform them) and blend
+    in a prior of `prior_weight` pseudo-games at the team's previous-season
+    mean, so early-season averages aren't driven by one or two games. Teams
+    with no previous season fall back to the plain running average (and NaN in
+    week 1).
     """
     if df_raw is None:
         df_raw = load_dataframe_from_raw()
+
+    stats = list(STAT_TO_AVG)
 
     df_sacks = add_sack_yards(df_raw)
     # df_game is team games stats by team: week 1, DET, 250 pass, 120 run, etc.
     df_game_posteam = df_sacks.groupby(["game_id", "posteam"])
     df_game = aggregate_game_stats(df_sacks, df_game_posteam)
     df_game = adjust_game_dataframe(df_game, df_game_posteam)
+
+    # chronological order within each team-season is required for cumulative sums
+    df_game = df_game.sort_values(["team", "year", "week"]).reset_index(drop=True)
+    df_game[stats] = df_game[stats].apply(pd.to_numeric, errors="coerce")
+
+    # previous-season per-team means, joined onto the following season as the prior
+    season_means = df_game.groupby(["team", "year"])[stats].mean().reset_index()
+    season_means["year"] += 1
+    priors = season_means.set_index(["team", "year"])[stats].add_suffix("_prior")
+    df_game = df_game.join(priors, on=["team", "year"])
+
     df_running_avg = df_game[
         [
             "game_id",
@@ -94,53 +134,28 @@ def build_running_avg_dataframe(df_raw: Optional[pd.DataFrame] = None) -> pd.Dat
 
     # Set the home_spread
     # This will be our target variable. It's the spread relative to the home team. We want this because we need to predict a single spread value (which we can then invert for the away team's spread).
-    df_running_avg["home_spread"] = df_game.apply(
-        lambda row: (
-            -row["score_differential_post"]
-            if row["team"] != row["home_team"]
-            else row["score_differential_post"]
-        ),
-        axis=1,
+    df_running_avg["home_spread"] = np.where(
+        df_game["team"] == df_game["home_team"],
+        df_game["score_differential_post"],
+        -df_game["score_differential_post"],
     )
 
-    # Get the running average for each team by team and year
-    # Uses lambda and shift to not include current row in running average
-    # Expand is an expanding window function that gets everything from the first to current row
-    df_running_avg[
-        [
-            "rushing_avg",
-            "passing_avg",
-            "yards_gained_avg",
-            "sack_yards_avg",
-            "passing_yards_defense_avg",
-            "rushing_yards_defense_avg",
-            "yards_gained_defense_avg",
-            "sack_yards_defense_avg",
-            "score_differential_post_avg",
-            "points_scored_avg",
-            "points_allowed_avg",
-            "mean_epa_avg",
-        ]
-    ] = (
-        df_game.groupby(["team", "year"])[
-            [
-                "rushing_yards",
-                "passing_yards",
-                "yards_gained",
-                "sack_yards",
-                "passing_yards_defense",
-                "rushing_yards_defense",
-                "yards_gained_defense",
-                "sack_yards_defense",
-                "score_differential_post",
-                "points_scored",
-                "points_allowed",
-                "mean_epa",
-            ]
-        ]
-        .apply(lambda x: x.shift().expanding().mean())
-        .reset_index(level=[0, 1], drop=True)
-    )
+    grouped = df_game.groupby(["team", "year"])
+    team_year = [df_game["team"], df_game["year"]]
+
+    for stat, avg_col in STAT_TO_AVG.items():
+        # shift so the current game is excluded from its own running average
+        shifted = grouped[stat].shift()
+        running_sum = shifted.groupby(team_year).cumsum().fillna(0)
+        games_played = shifted.notna().groupby(team_year).cumsum()
+
+        prior = df_game[f"{stat}_prior"]
+        blended = (running_sum + prior_weight * prior) / (games_played + prior_weight)
+        unblended = running_sum / games_played.replace(0, np.nan)
+
+        df_running_avg[avg_col] = np.where(
+            prior.notna() & (prior_weight > 0), blended, unblended
+        )
 
     return df_running_avg
 

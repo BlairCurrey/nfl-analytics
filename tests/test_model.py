@@ -1,7 +1,9 @@
+import numpy as np
 import pandas as pd
 import pytest
 
-from nfl_analytics.model import make_matchup
+from nfl_analytics.config import FEATURES
+from nfl_analytics.model import make_matchup, train_model
 
 AVG_COLS = [
     "rushing_avg",
@@ -85,6 +87,24 @@ def test_missing_team_raises_clear_error():
 
     with pytest.raises(ValueError, match="No stats found for SF in the 2025 season"):
         make_matchup(df, "KC", "SF")
+
+
+def test_train_model_uses_complete_rows_including_week_1():
+    rng = np.random.default_rng(0)
+    n = 40
+    df = pd.DataFrame({col: rng.normal(0, 1, n) for col in FEATURES})
+    df["home_spread"] = rng.normal(2, 10, n)
+    df["week"] = [1] * 10 + [2] * 30
+
+    # a week-1 row without features (team with no prior season) must be dropped,
+    # not imputed; complete week-1 rows train fine
+    df.loc[0, FEATURES] = np.nan
+
+    model, scaler, metrics = train_model(df)
+
+    assert model.coef_.shape == (len(FEATURES),)
+    assert "mean_absolute_error" in metrics
+    assert not np.isnan(metrics["mean_absolute_error"])
 
 
 def test_missing_week_raises_clear_error():

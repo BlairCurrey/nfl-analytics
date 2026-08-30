@@ -19,6 +19,11 @@ from nfl_analytics.dataframes import (
     build_running_avg_dataframe,
     build_training_dataframe,
 )
+from nfl_analytics.evaluate import (
+    evaluate_spread_model,
+    extract_vegas_lines,
+    format_report,
+)
 from nfl_analytics.schedule import (
     Matchup,
     get_upcoming_matchups,
@@ -93,6 +98,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Training run to use (defaults to the latest).",
     )
 
+    evaluate_parser = subparsers.add_parser(
+        "evaluate",
+        help="Score the model against naive and Vegas baselines on held-out "
+        "seasons. Trains on seasons before --test-since, tests on the rest.",
+    )
+    evaluate_parser.add_argument(
+        "--test-since",
+        type=int,
+        default=2023,
+        metavar="year",
+        help="First season of the held-out test set (default: 2023).",
+    )
+
     subparsers.add_parser(
         "run-pipeline",
         help="Full weekly pipeline: fetch matchups, update data, train, and "
@@ -132,6 +150,32 @@ def run_train() -> str:
     model, scaler, metrics = train_model(df_training)
 
     return runs.save_run(model, scaler, df_running_avg, metrics)
+
+
+def run_evaluate(test_since: int) -> None:
+    if not get_downloaded_years():
+        sys.exit(
+            "No downloaded data found. Run `nfl download` first, "
+            "or `nfl update` to download and train in one step."
+        )
+
+    start_time = time.time()
+    print("Loading dataframe...")
+    df_raw = load_dataframe_from_raw()
+    print(f"Loaded dataframe in {time.time() - start_time:.1f} seconds")
+
+    print("Building training data and evaluating...")
+    vegas_lines = extract_vegas_lines(df_raw)
+    df_running_avg = build_running_avg_dataframe(df_raw)
+    df_training = build_training_dataframe(df_running_avg)
+
+    try:
+        results = evaluate_spread_model(df_training, vegas_lines, test_since)
+    except ValueError as e:
+        sys.exit(str(e))
+
+    print()
+    print(format_report(results))
 
 
 def run_update() -> str:
@@ -237,6 +281,8 @@ def main():
         run_download(args.years)
     elif args.command == "train":
         run_train()
+    elif args.command == "evaluate":
+        run_evaluate(args.test_since)
     elif args.command == "update":
         run_update()
     elif args.command == "predict":

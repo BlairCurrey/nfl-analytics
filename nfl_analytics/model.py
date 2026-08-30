@@ -5,7 +5,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from scipy.sparse import spmatrix
 from numpy import ndarray
@@ -23,22 +22,16 @@ class Prediction:
 def train_model(
     df_training: pd.DataFrame,
 ) -> Tuple[LinearRegression, StandardScaler, dict[str, float]]:
-    # Drop week 1 because is all NaN
-    df_train = df_training[df_training["week"] > 1]
-
-    # Dont use unnecessary columns like 'game_id', 'week', 'year', 'team', 'home_team', 'away_team'
-    # Keep only relevant columns for prediction
     target = "home_spread"
-    select_columns = FEATURES + [target]
 
-    df_train = df_train[select_columns]
+    # Keep any row with complete features and a target. Week 1 rows qualify
+    # when the team has a prior-season blend; rows without full features
+    # (e.g. a team's first-ever season) are dropped rather than imputed,
+    # since prediction can't impute either.
+    df_train = df_training[FEATURES + [target]].dropna()
 
-    # TODO: why are there missing values?
-    imputer = SimpleImputer(strategy="mean")
-    df_imputed = pd.DataFrame(imputer.fit_transform(df_train), columns=df_train.columns)
-
-    X = df_imputed.drop(target, axis=1)
-    y = df_imputed[target]
+    X = df_train.drop(target, axis=1)
+    y = df_train[target]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42

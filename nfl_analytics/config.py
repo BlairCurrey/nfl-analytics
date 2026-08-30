@@ -1,6 +1,10 @@
 DATA_DIR = "data"
 ASSET_DIR = "assets"
 START_YEAR = 1999
+# Early-season running averages blend in this many pseudo-games at the team's
+# previous-season mean, decaying as real games accumulate. Chosen empirically
+# via `nfl evaluate` (see .claude/improvements.md).
+PRIOR_PSEUDO_GAMES = 4
 MANIFEST_FILENAME = "manifest.json"
 MODEL_FILENAME = "model.joblib"
 SCALER_FILENAME = "scaler.joblib"

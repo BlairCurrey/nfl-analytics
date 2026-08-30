@@ -1,6 +1,8 @@
 # Model
 
-The model itself is a simple linear regression model. This was intended as a starting point with many different avenues for improvement, but it's performance isnt too bad. The mean absolute error is around 10. This is the average amount the predicted spread is off by. I could not find an average difference for Vegas odds but according to [Vegas Always Knows? A Mathematical Deep Dive](https://www.theonlycolors.com/2020/9/29/21492301/vegas-always-knows-a-mathematical-deep-dive) the standard deviation of Vegas spreads is around 14. That is, 68% of games are within 14 points of the spread, and 32% are higher. Thus, a mean absolute error of 10 seems like we're in the ballpark even if not really competitive.
+The model itself is a simple linear regression model. This was intended as a starting point with many different avenues for improvement, but it's performance isnt too bad. Measured with `nfl evaluate` (trained on seasons before 2023, tested on 2023+ games), the mean absolute error — the average amount the predicted spread is off by — is about 10.3. On the same games, always predicting the average home-field advantage scores 11.2, and the Vegas closing spread (from the `spread_line` column in the play-by-play data) scores 9.8. So the model is roughly halfway between knowing nothing and the market. Its against-the-spread pick accuracy is below the ~52.4% betting breakeven, as expected: real signal, no edge.
+
+See `.claude/improvements.md` for measured results of attempted improvements.
 
 ## Ideas for Improvement
 

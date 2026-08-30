@@ -123,10 +123,10 @@ def _get_upcoming_event_urls() -> List[str]:
 
     season_position = _get_season_position(calendar_data)
 
-    # only get events for regular season and postseason, but not regular season week 1
+    # only get events for regular season and postseason. Week 1 is predictable
+    # too: running averages blend in the prior season, and for week 1 that
+    # blend is (approximately) the prior-season mean.
     if season_position.type not in [SeasonType.REGULAR, SeasonType.POSTSEASON]:
-        return []
-    if season_position.type is SeasonType.REGULAR and season_position.week == "1":
         return []
 
     # Get's the current season including the current week
