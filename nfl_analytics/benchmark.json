@@ -4,17 +4,17 @@
     2025
   ],
   "n_train_games": 6400,
-  "n_test_games": 854,
+  "n_test_games": 855,
   "mae": {
-    "naive": 11.1743,
-    "model": 10.2847,
-    "vegas": 9.8179
+    "naive": 11.1556,
+    "model": 10.2987,
+    "vegas": 9.8117
   },
   "rmse": {
-    "naive": 14.3595,
-    "model": 13.2209,
-    "vegas": 12.7313
+    "naive": 14.3513,
+    "model": 13.2416,
+    "vegas": 12.7248
   },
-  "gap_closed": 0.6559,
-  "ats_accuracy": 0.4922
+  "gap_closed": 0.6376,
+  "ats_accuracy": 0.4892
 }
