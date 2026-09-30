@@ -1,5 +1,7 @@
 # About
 
+**See this week's predictions and the model's track record at https://blaircurrey.github.io/nfl-analytics/**
+
 This repository contains a python cli application for predicting nfl spreads. The app trains a model from the latest available data and predicts upcoming matchups. In addition to running locally, a github action runs the full pipeline weekly during the season and publishes each week's predictions, before kickoff, as a [release](https://github.com/BlairCurrey/nfl-analytics/releases). The latest predictions are always at https://github.com/BlairCurrey/nfl-analytics/releases/latest/download/predictions.json.
 
 Visit the docs for [the model](./nfl_analytics/docs/model.md) and [training data](./nfl_analytics/docs/training-data.md) for more details on each.

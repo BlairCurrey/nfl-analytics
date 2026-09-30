@@ -358,7 +358,23 @@ h2 {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   visibility: hidden;
 }
-.info:hover .info-note, .info-btn:focus-visible + .info-note, .info-btn[aria-expanded="true"] + .info-note { visibility: visible; }
+.info-note.align-end { left: auto; right: 0; transform: none; }
+.hint-btn {
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+th .info-note { font-weight: 400; white-space: normal; text-align: left; }
+.info:hover .info-note,
+.info-btn:focus-visible + .info-note,
+.hint-btn:focus-visible + .info-note,
+.info-btn[aria-expanded="true"] + .info-note,
+.hint-btn[aria-expanded="true"] + .info-note { visibility: visible; }
 .tile .value { font-size: var(--step-2); font-weight: 600; line-height: 1.15; }
 .tile .sub { font-size: var(--step--1); color: var(--muted); }
 @media (max-width: 760px) {
@@ -822,17 +838,18 @@ function tile(label, value, sub, info) {
   return t;
 }
 
-// An (i) button that reveals a short note on hover, focus, or tap
+// A button that reveals a short note on hover, focus, or tap. By default it's
+// an (i) icon; with `label` it's that text, underlined (for table headers).
 let infoCount = 0;
-function infoButton(topic, text) {
+function infoButton(topic, text, { label, alignEnd = false } = {}) {
   const id = `info-${++infoCount}`;
   const wrap = el("span", "info");
-  const button = el("button", "info-btn", "i");
+  const button = el("button", label ? "hint-btn" : "info-btn", label ?? "i");
   button.type = "button";
-  button.setAttribute("aria-label", `About ${topic.toLowerCase()}`);
+  if (!label) button.setAttribute("aria-label", `About ${topic.toLowerCase()}`);
   button.setAttribute("aria-describedby", id);
   button.setAttribute("aria-expanded", "false");
-  const note = el("span", "info-note", text);
+  const note = el("span", alignEnd ? "info-note align-end" : "info-note", text);
   note.id = id;
   note.setAttribute("role", "tooltip");
   button.addEventListener("click", () => {
@@ -1156,8 +1173,17 @@ function renderResults(ledger, season, week) {
   const table = el("table");
   const thead = el("thead");
   const hr = el("tr");
+  const headerNotes = {
+    "ATS pick": "Against the spread",
+    Result:
+      "How the ATS pick did against the final score. Win: the margin landed on the model's side of the line. " +
+      "Loss: it landed on the other side. Push: exactly on the line, so a bet would be refunded.",
+  };
   for (const [h, n] of [["Game", false], ["Date", false], ["Model", false], ["Vegas at publish", false], ["Vegas close", false], ["Final", false], ["Model miss", true], ["Vegas miss", true], ["ATS pick", false], ["Result", false]]) {
-    hr.append(el("th", n ? "n" : "", h));
+    const th = el("th", n ? "n" : "");
+    if (headerNotes[h]) th.append(infoButton(h, headerNotes[h], { label: h, alignEnd: true }));
+    else th.textContent = h;
+    hr.append(th);
   }
   thead.append(hr);
 
