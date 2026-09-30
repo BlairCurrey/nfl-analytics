@@ -92,6 +92,15 @@ If any step fails, nothing is published and the workflow opens (or comments on) 
 
 To redo a bad release, delete it (and its tag) and re-run the workflow before kickoff.
 
+## Website
+
+The GitHub Pages site at https://blaircurrey.github.io/nfl-analytics/ shows this week's predictions, the benchmark, and the graded track record. It's a single static page (`site/index.html`) that reads `data/ledger.csv` and `data/manifest.json`. The Pages workflow copies both from the latest release and redeploys after every weekly run, and whenever `site/` changes.
+
+To preview it locally, copy those two files from a pipeline run (or the latest release) into `site/data/` and serve the folder:
+
+    mkdir -p site/data && cp nfl_analytics/assets/runs/<run_id>/{ledger.csv,manifest.json} site/data/
+    python3 -m http.server -d site
+
 ## Development
 
 Run the tests with:

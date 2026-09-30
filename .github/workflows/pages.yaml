@@ -1,0 +1,71 @@
+name: Pages
+
+# Builds the GitHub Pages site from site/ plus the latest release's ledger and
+# manifest. Runs after each weekly predictions run, and when the site changes.
+# The data is bundled at build time because browsers can't fetch release
+# assets directly (GitHub's download redirects don't allow cross-origin reads).
+
+on:
+  workflow_run:
+    workflows: ["Weekly predictions"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download latest release data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site/data
+          assets=$(gh release view --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+          for file in ledger.csv manifest.json; do
+            if grep -qx "$file" <<< "$assets"; then
+              gh release download --repo "$GITHUB_REPOSITORY" --pattern "$file" --dir site/data
+            else
+              echo "Latest release has no $file; the page will show its empty state."
+            fi
+          done
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
