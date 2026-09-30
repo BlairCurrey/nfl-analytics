@@ -84,9 +84,10 @@ The model that is actually published is trained on every season, with nothing he
 2. Fetches the next week that still has unplayed games (exiting cleanly in the offseason).
 3. Downloads the latest play-by-play data and validates it: every season present and complete, the current season up to date, known team names.
 4. Recomputes the benchmark and stops if it doesn't match `benchmark.json`.
-5. Trains on every season, predicts the matchups, and sanity-checks the predictions: kickoffs in the next 8 days, no team playing twice, plausible spreads.
-6. Grades previously published predictions against final scores and Vegas closing lines, and carries the full history forward in `ledger.csv`.
-7. Publishes an immutable release named `predictions-<season>-w<week>`, with checksums and build provenance attestations. An existing release is never replaced, so if Tuesday already published the week, Wednesday's retry does nothing.
+5. Trains on every season, predicts the matchups, and records the current Vegas line for each game (from nflverse's schedule file).
+6. Sanity-checks the predictions: kickoffs in the next 8 days, no team playing twice, plausible spreads, and not unusually far from the Vegas lines on average.
+7. Grades previously published predictions against final scores and Vegas closing lines, and carries the full history forward in `ledger.csv`. Comparing the line at publish time with the closing line shows whether the market moved toward the model afterwards.
+8. Publishes an immutable release named `predictions-<season>-w<week>`, with checksums and build provenance attestations. An existing release is never replaced, so if Tuesday already published the week, Wednesday's retry does nothing.
 
 If any step fails, nothing is published and the workflow opens (or comments on) a `pipeline-failure` issue.
 

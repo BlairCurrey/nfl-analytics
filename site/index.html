@@ -250,6 +250,12 @@ h2 {
 .game .matchup { font-weight: 600; letter-spacing: 0.02em; }
 .game .matchup .at { color: var(--muted); font-weight: 400; padding-inline: 2px; }
 .game .pick { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pick .vegas-line { display: block; font-weight: 400; font-size: var(--step--1); color: var(--muted); }
+.strip-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: var(--step--1); color: var(--ink-2); margin-bottom: 10px; }
+.strip-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.key-dot, .key-diamond { display: inline-block; width: 10px; height: 10px; }
+.key-dot { border-radius: 50%; background: var(--model); }
+.key-diamond { width: 8px; height: 8px; background: var(--vegas); transform: rotate(45deg); }
 .strip { position: relative; height: 26px; }
 .strip .tick {
   position: absolute;
@@ -264,6 +270,15 @@ h2 {
   top: 10px;
   height: 6px;
   background: var(--model-wash);
+}
+.strip .vegas {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--vegas);
+  border: 2px solid var(--bg);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 .strip .dot {
   position: absolute;
@@ -563,6 +578,7 @@ function parseLedger(text) {
       line: num(row.vegas_line),
       actual: num(row.actual_margin),
       gameId: row.game_id,
+      open: num(row.line_at_publish), // Vegas line when the prediction was published
     };
   });
 }
@@ -621,13 +637,22 @@ function seasonPhase(week) {
 function stats(rows) {
   const graded = rows.filter(isGraded);
   const n = graded.length;
-  const s = { n, wins: 0, losses: 0, pushes: 0, closer: 0, modelMae: 0, vegasMae: 0 };
+  const s = { n, wins: 0, losses: 0, pushes: 0, closer: 0, modelMae: 0, vegasMae: 0, moves: 0, movesToward: 0 };
   for (const r of graded) {
     const m = Math.abs(r.predicted - r.actual);
     const v = Math.abs(r.line - r.actual);
     s.modelMae += m / n;
     s.vegasMae += v / n;
     if (m < v) s.closer += 1;
+    // did the line move toward the model between publishing and the close?
+    if (r.open !== null) {
+      const move = Math.sign(r.line - r.open);
+      const lean = Math.sign(r.predicted - r.open);
+      if (move !== 0 && lean !== 0) {
+        s.moves += 1;
+        if (move === lean) s.movesToward += 1;
+      }
+    }
     s[{ win: "wins", loss: "losses", push: "pushes" }[atsResult(r)]] += 1;
   }
   return s;
@@ -707,9 +732,15 @@ function strip(r) {
   const p = scalePos(r.predicted);
   bar.style.left = `${Math.min(50, p)}%`;
   bar.style.width = `${Math.abs(p - 50)}%`;
+  s.append(bar);
+  if (r.open !== null) {
+    const vegas = el("span", "vegas");
+    vegas.style.left = `${scalePos(r.open)}%`;
+    s.append(vegas);
+  }
   const dot = el("span", "dot");
   dot.style.left = `${p}%`;
-  s.append(bar, dot);
+  s.append(dot);
   return s;
 }
 
@@ -737,6 +768,15 @@ function renderGames(current) {
     return;
   }
 
+  if (current.some((r) => r.open !== null)) {
+    const legend = el("div", "strip-legend");
+    const model = el("span");
+    model.append(el("i", "key-dot"), document.createTextNode("Model"));
+    const vegas = el("span");
+    vegas.append(el("i", "key-diamond"), document.createTextNode("Vegas line when published"));
+    legend.append(model, vegas);
+    list.append(legend);
+  }
   list.append(scaleHead());
   const sorted = [...current].sort((a, b) => (a.kickoff ?? 0) - (b.kickoff ?? 0));
   let lastDay = null;
@@ -762,9 +802,11 @@ function renderGames(current) {
     row.append(matchup, strip(r));
 
     const pick = el("span", "pick", lineText(r, r.predicted));
+    if (r.open !== null) pick.append(el("span", "vegas-line", `Vegas ${lineText(r, r.open, fmtHalf)}`));
     pick.title = `Predicted final margin: ${finalText({ ...r, actual: Math.round(r.predicted * 10) / 10 })}`;
     row.append(pick);
-    row.setAttribute("aria-label", `${r.away} at ${r.home}, ${time}. Predicted line ${lineText(r, r.predicted)}.`);
+    const vegasText = r.open !== null ? ` Vegas line ${lineText(r, r.open, fmtHalf)}.` : "";
+    row.setAttribute("aria-label", `${r.away} at ${r.home}, ${time}. Predicted line ${lineText(r, r.predicted)}.${vegasText}`);
     list.append(row);
   }
 }
@@ -849,6 +891,18 @@ function renderRecord(ledger, season) {
     tile("Closer than Vegas", `${s.closer} of ${s.n}`, "games where the model missed by less")
   );
   body.append(tiles);
+
+  if (s.moves > 0) {
+    body.append(
+      el(
+        "p",
+        "alltime",
+        `After publishing, the Vegas line moved toward the model in ${s.movesToward} of ${s.moves} games where it moved (${pct(s.movesToward / s.moves)}). ` +
+          "Sharp bettors are judged this way: if the market keeps moving toward your number, you knew something first. " +
+          "Well above 50% over a few hundred games would be the clearest sign of a real edge."
+      )
+    );
+  }
 
   const all = stats(ledger);
   const seasons = new Set(ledger.filter(isGraded).map((r) => r.season));
@@ -1102,7 +1156,7 @@ function renderResults(ledger, season, week) {
   const table = el("table");
   const thead = el("thead");
   const hr = el("tr");
-  for (const [h, n] of [["Game", false], ["Date", false], ["Model", false], ["Vegas close", false], ["Final", false], ["Model miss", true], ["Vegas miss", true], ["ATS pick", false], ["Result", false]]) {
+  for (const [h, n] of [["Game", false], ["Date", false], ["Model", false], ["Vegas at publish", false], ["Vegas close", false], ["Final", false], ["Model miss", true], ["Vegas miss", true], ["ATS pick", false], ["Result", false]]) {
     hr.append(el("th", n ? "n" : "", h));
   }
   thead.append(hr);
@@ -1113,11 +1167,12 @@ function renderResults(ledger, season, week) {
     const game = el("td", "game-cell", `${r.away} @ ${r.home}`);
     const date = el("td", "muted", r.kickoff ? dateFmt.format(r.kickoff) : "");
     const model = el("td", "num", lineText(r, r.predicted));
+    const open = r.open !== null ? el("td", "num", lineText(r, r.open, fmtHalf)) : el("td", "muted", "—");
     if (!isGraded(r)) {
       const pending = el("span", "result pending", "Not played yet");
       const cell = el("td");
       cell.append(pending);
-      tr.append(game, date, model, el("td", "muted", "—"), el("td", "muted", "—"), el("td", "n muted", "—"), el("td", "n muted", "—"), el("td", "muted", "—"), cell);
+      tr.append(game, date, model, open, el("td", "muted", "—"), el("td", "muted", "—"), el("td", "n muted", "—"), el("td", "n muted", "—"), el("td", "muted", "—"), cell);
     } else {
       const res = atsResult(r);
       const chip = el("span", `result ${res}`);
@@ -1128,6 +1183,7 @@ function renderResults(ledger, season, week) {
         game,
         date,
         model,
+        open,
         el("td", "num", lineText(r, r.line, fmtHalf)),
         el("td", "num", finalText(r)),
         el("td", "n", fmt1(Math.abs(r.predicted - r.actual))),

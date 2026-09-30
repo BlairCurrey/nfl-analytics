@@ -50,6 +50,7 @@ from nfl_analytics.validate import (
     validate_raw_data,
 )
 from nfl_analytics import ledger, runs
+from nfl_analytics.lines import fetch_lines
 from nfl_analytics.provenance import collect_provenance
 from nfl_analytics.utils import (
     is_valid_year,
@@ -428,6 +429,7 @@ def run_pipeline(previous_dir: Optional[str]) -> None:
     # files are exactly what produced the published predictions
     model, scaler, df_running_avg, _ = _load_run_or_exit(run_id)
     predictions = _predict_matchups(model, scaler, df_running_avg, matchups)
+    _attach_vegas_lines(predictions, season, week)
 
     try:
         raise_if_problems(
@@ -455,6 +457,37 @@ def run_pipeline(previous_dir: Optional[str]) -> None:
     print(notes)
 
 
+def _attach_vegas_lines(predictions: List[Prediction], season: int, week: int) -> None:
+    """Record the current Vegas line on each prediction. Lines are useful but
+    not essential, so an unavailable source doesn't block publishing."""
+    print("Fetching current Vegas lines...")
+    try:
+        lines = fetch_lines(season, week)
+    except (OSError, ValueError) as e:
+        print(f"Couldn't fetch Vegas lines; publishing without them: {e}")
+        return
+
+    for p in predictions:
+        p.vegas_line = lines.get((p.home_team, p.away_team))
+
+    found = sum(p.vegas_line is not None for p in predictions)
+    print(f"Found Vegas lines for {found} of {len(predictions)} games.")
+
+
+def _line_text(home: str, away: str, home_margin: Optional[float]) -> str:
+    """Sportsbook style: the favorite takes the minus sign."""
+    if home_margin is None:
+        return "—"
+    if abs(home_margin) < 0.05:
+        return "Even"
+
+    team = home if home_margin > 0 else away
+    points = abs(home_margin)
+    # Vegas lines are in half points ("3", "2.5"); model margins get one decimal
+    shown = f"{points:g}" if (points * 2).is_integer() else f"{points:.1f}"
+    return f"{team} −{shown}"
+
+
 def _release_notes(
     matchups: List[Matchup],
     predictions: List[Prediction],
@@ -464,14 +497,18 @@ def _release_notes(
     season, week = matchups[0].season, matchups[0].week
     lines = [
         f"Predicted spreads for {season} week {week}, published before kickoff. "
-        "Spreads are the predicted home margin: 3.5 means the home team by 3.5.",
+        "Lines are written like a sportsbook's: the favorite takes the minus sign. "
+        "The Vegas column is the line when these predictions were published.",
         "",
-        "| home | away | predicted spread | kickoff (UTC) |",
+        "| game | model | Vegas | kickoff (UTC) |",
         "| --- | --- | --- | --- |",
     ]
     for m, p in zip(matchups, predictions):
         lines.append(
-            f"| {m.home_team} | {m.away_team} | {p.spread:+.1f} | {m.kickoff} |"
+            f"| {m.away_team} @ {m.home_team} "
+            f"| {_line_text(m.home_team, m.away_team, p.spread)} "
+            f"| {_line_text(m.home_team, m.away_team, p.vegas_line)} "
+            f"| {m.kickoff} |"
         )
 
     lines += [

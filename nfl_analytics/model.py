@@ -18,6 +18,8 @@ class Prediction:
     # nflverse season (start year) and week of the game, when known
     season: Optional[int] = None
     week: Optional[int] = None
+    # Vegas line when the prediction was made (home margin), when available
+    vegas_line: Optional[float] = None
 
 
 def train_model(

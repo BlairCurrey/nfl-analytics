@@ -46,6 +46,15 @@ MIN_GAMES_PER_COMPLETED_SEASON = 240
 MAX_GAMES_PER_WEEK = 16
 MAX_ABS_SPREAD = 30.0
 
+# Replaying 2004-2025 (each season predicted by a model trained on earlier
+# seasons), the weekly average distance from the Vegas line has median 2.4,
+# 99th percentile 4.9, and max 5.7 (final regular-season weeks, when starters
+# rest). Far beyond that means something broke, e.g. a flipped sign puts it
+# around 11. Single games can legitimately be far off (injuries the model
+# can't see), so only the weekly average is checked.
+MAX_MEAN_DISTANCE_FROM_MARKET = 7.0
+MIN_LINES_FOR_MARKET_CHECK = 4
+
 
 class ValidationError(Exception):
     def __init__(self, what: str, problems: List[str]):
@@ -152,6 +161,17 @@ def validate_predictions(
         if not math.isfinite(p.spread) or abs(p.spread) > MAX_ABS_SPREAD:
             problems.append(
                 f"{p.home_team} vs {p.away_team}: implausible spread {p.spread}"
+            )
+
+    distances = [
+        abs(p.spread - p.vegas_line) for p in predictions if p.vegas_line is not None
+    ]
+    if len(distances) >= MIN_LINES_FOR_MARKET_CHECK:
+        mean_distance = sum(distances) / len(distances)
+        if mean_distance > MAX_MEAN_DISTANCE_FROM_MARKET:
+            problems.append(
+                f"predictions are {mean_distance:.1f} points from the Vegas line on "
+                f"average (max {MAX_MEAN_DISTANCE_FROM_MARKET})"
             )
 
     return problems

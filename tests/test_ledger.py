@@ -10,7 +10,10 @@ def week_4():
         Matchup("KC", "SF", 2026, 4, "2026-10-04T20:25Z"),
         Matchup("DAL", "PHI", 2026, 4, "2026-10-05T00:20Z"),
     ]
-    predictions = [Prediction("KC", "SF", 3.456), Prediction("DAL", "PHI", -2.0)]
+    predictions = [
+        Prediction("KC", "SF", 3.456, 2026, 4, vegas_line=1.5),
+        Prediction("DAL", "PHI", -2.0, 2026, 4, vegas_line=-3.0),
+    ]
     return matchups, predictions
 
 
@@ -96,7 +99,29 @@ def test_summarize_scores_model_and_vegas():
 
     # KC: predicted 3.46, actual 7, line 2.5 -> error 3.54, vegas 4.5, pick home, covered: win
     # DAL: predicted -2.0, actual -14, line -3 -> error 12.0, vegas 11.0, pick home, lost: loss
-    assert "| 2026 season | 2 | 7.77 | 7.75 | 1-1 |" in summary
+    # line moves: KC opened 1.5, closed 2.5 -> moved toward the model's 3.46;
+    # DAL opened -3.0, closed -3.0 -> didn't move, so it doesn't count
+    assert "| 2026 season | 2 | 7.77 | 7.75 | 1-1 | 1 of 1 |" in summary
+
+
+def test_add_predictions_records_line_at_publish():
+    matchups, predictions = week_4()
+
+    df = ledger.add_predictions(ledger.load_ledger(""), matchups, predictions, "run1")
+
+    assert list(df["line_at_publish"]) == [1.5, -3.0]
+
+
+def test_ledger_written_before_line_at_publish_still_loads(tmp_path):
+    path = tmp_path / "old.csv"
+    old_columns = [c for c in ledger.COLUMNS if c != "line_at_publish"]
+    pd.DataFrame([[2026, 3, "KC", "SF", "2026-09-27T17:00Z", 3.0, "r", "", "", ""]],
+                 columns=old_columns).to_csv(path, index=False)
+
+    df = ledger.load_ledger(str(path))
+
+    assert list(df.columns) == ledger.COLUMNS
+    assert df["line_at_publish"].isna().all()
 
 
 def test_summarize_without_graded_rows():

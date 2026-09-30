@@ -128,3 +128,23 @@ def test_mixed_weeks_are_reported():
     assert "matchups span more than one season/week" in validate_predictions(
         matchups, predictions, NOW
     )
+
+
+def test_predictions_far_from_the_market_are_reported():
+    matchups = [matchup(h, a) for h, a in [("KC", "SF"), ("DAL", "PHI"), ("BUF", "MIA"), ("GB", "CHI")]]
+    # every prediction has the sign flipped relative to the line
+    predictions = [Prediction(m.home_team, m.away_team, -7.0, vegas_line=7.0) for m in matchups]
+
+    problems = validate_predictions(matchups, predictions, NOW)
+
+    assert problems == ["predictions are 14.0 points from the Vegas line on average (max 7.0)"]
+
+
+def test_market_check_needs_enough_lines():
+    matchups = [matchup("KC", "SF"), matchup("DAL", "PHI")]
+    predictions = [
+        Prediction("KC", "SF", -7.0, vegas_line=7.0),
+        Prediction("DAL", "PHI", 1.0),
+    ]
+
+    assert validate_predictions(matchups, predictions, NOW) == []

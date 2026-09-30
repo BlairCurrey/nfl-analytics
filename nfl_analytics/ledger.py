@@ -8,7 +8,11 @@ ever added or filled in, never rewritten, so the ledger reflects exactly what
 was published before kickoff.
 
 All spreads are home margins: positive means the home team wins by that many.
-The Vegas line is the closing line from the play-by-play data.
+`line_at_publish` is the Vegas line when the prediction was published;
+`vegas_line` is the closing line from the play-by-play data. If the line tends
+to move toward the model's prediction between the two, the model knew
+something the market later learned: the clearest sign of a real edge, and one
+that shows up in far fewer games than a betting record does.
 """
 
 import os
@@ -24,6 +28,7 @@ KEY = ["season", "week", "home_team", "away_team"]
 COLUMNS = KEY + [
     "kickoff",
     "predicted_spread",
+    "line_at_publish",
     "run_id",
     "game_id",
     "vegas_line",
@@ -35,7 +40,8 @@ def load_ledger(path: str) -> pd.DataFrame:
     if not os.path.isfile(path):
         return pd.DataFrame(columns=COLUMNS)
 
-    return pd.read_csv(path)[COLUMNS]
+    # reindex so ledgers written before a column existed still load
+    return pd.read_csv(path).reindex(columns=COLUMNS)
 
 
 def save_ledger(ledger: pd.DataFrame, path: str) -> None:
@@ -58,6 +64,7 @@ def add_predictions(
                 "away_team": m.away_team,
                 "kickoff": m.kickoff,
                 "predicted_spread": round(p.spread, 2),
+                "line_at_publish": p.vegas_line,
                 "run_id": run_id,
             }
             for m, p in zip(matchups, predictions)
@@ -129,12 +136,22 @@ def _score(graded: pd.DataFrame) -> dict[str, float]:
     outcome = np.sign(actual - line)
     decided = (outcome != 0) & (pick != 0)
 
+    # Line movement: of the games where the line moved after publishing (and
+    # the model disagreed with the line at publish), how often it moved
+    # toward the model
+    opened = graded["line_at_publish"].astype(float)
+    move = np.sign(line - opened)
+    lean = np.sign(predicted - opened)
+    moved = opened.notna() & (move != 0) & (lean != 0)
+
     return {
         "games": len(graded),
         "model_mae": float((predicted - actual).abs().mean()),
         "vegas_mae": float((line - actual).abs().mean()),
         "ats_wins": int((pick[decided] == outcome[decided]).sum()),
         "ats_losses": int((pick[decided] != outcome[decided]).sum()),
+        "line_moves": int(moved.sum()),
+        "line_moves_toward": int((move[moved] == lean[moved]).sum()),
     }
 
 
@@ -152,13 +169,16 @@ def summarize(ledger: pd.DataFrame) -> str:
     ]
 
     lines = [
-        "| | games | model MAE | Vegas MAE | against the spread |",
-        "| --- | --- | --- | --- | --- |",
+        "| | games | model MAE | Vegas MAE | against the spread | line moved toward model |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     for label, s in rows:
+        toward = (
+            f"{s['line_moves_toward']} of {s['line_moves']}" if s["line_moves"] else "—"
+        )
         lines.append(
             f"| {label} | {s['games']} | {s['model_mae']:.2f} | "
-            f"{s['vegas_mae']:.2f} | {s['ats_wins']}-{s['ats_losses']} |"
+            f"{s['vegas_mae']:.2f} | {s['ats_wins']}-{s['ats_losses']} | {toward} |"
         )
 
     return "\n".join(lines)
