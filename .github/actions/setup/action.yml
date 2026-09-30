@@ -1,0 +1,53 @@
+name: Set up nfl-analytics
+description: Install uv and dependencies; optionally restore play-by-play data and add swap for training.
+
+inputs:
+  data:
+    description: Restore cached play-by-play data and add swap (needed to load every season).
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      shell: bash
+      run: uv sync --frozen
+
+    # Completed seasons never change, so the cache is keyed by season and saved
+    # once per season. The in-progress season is re-downloaded on every run.
+    - name: Determine season
+      if: inputs.data == 'true'
+      id: season
+      shell: bash
+      run: |
+        month=$(date -u +%-m)
+        year=$(date -u +%Y)
+        if (( month < 9 )); then year=$((year - 1)); fi
+        echo "year=$year" >> "$GITHUB_OUTPUT"
+
+    - name: Cache play-by-play data
+      if: inputs.data == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: nfl_analytics/data
+        key: pbp-season-${{ steps.season.outputs.year }}
+        restore-keys: |
+          pbp-season-
+
+    # Loading every season into one dataframe can exhaust runner memory
+    # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
+    - name: Increase swapfile
+      if: inputs.data == 'true'
+      shell: bash
+      run: |
+        sudo swapoff -a
+        sudo fallocate -l 12G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        sudo swapon --show

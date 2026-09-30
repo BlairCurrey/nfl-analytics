@@ -1,10 +1,8 @@
-from typing import Tuple, Optional, Union
+from typing import Any, Tuple, Optional, Union
 from dataclasses import dataclass
 
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 from scipy.sparse import spmatrix
 from numpy import ndarray
@@ -17,42 +15,42 @@ class Prediction:
     home_team: str
     away_team: str
     spread: float
+    # nflverse season (start year) and week of the game, when known
+    season: Optional[int] = None
+    week: Optional[int] = None
 
 
 def train_model(
     df_training: pd.DataFrame,
-) -> Tuple[LinearRegression, StandardScaler, dict[str, float]]:
+) -> Tuple[LinearRegression, StandardScaler, dict[str, Any]]:
+    """Fit on every usable game. Nothing is held out: the shipped model should
+    learn from all the data. Measure accuracy with `nfl benchmark` / `nfl
+    evaluate`, which hold out whole seasons."""
     target = "home_spread"
 
-    # Keep any row with complete features and a target. Week 1 rows qualify
-    # when the team has a prior-season blend; rows without full features
-    # (e.g. a team's first-ever season) are dropped rather than imputed,
-    # since prediction can't impute either.
-    df_train = df_training[FEATURES + [target]].dropna()
-
-    X = df_train.drop(target, axis=1)
-    y = df_train[target]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+    # The training dataframe has two identical rows per game (one per team
+    # perspective); use one row per game. Keep any game with complete features
+    # and a target. Week 1 rows qualify when the team has a prior-season
+    # blend; rows without full features (e.g. a team's first-ever season) are
+    # dropped rather than imputed, since prediction can't impute either.
+    df_train = df_training.drop_duplicates(subset="game_id").dropna(
+        subset=FEATURES + [target]
     )
 
-    # Note: scaler is transformed by fit_transform. Must re-use the same scaler for prediction.
+    # Note: the scaler is fit here. Must re-use the same scaler for prediction.
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X_scaled = scaler.fit_transform(df_train[FEATURES])
 
     model = LinearRegression()
-    model.fit(X_train_scaled, y_train)
+    model.fit(X_scaled, df_train[target])
 
-    y_pred = model.predict(X_test_scaled)
+    details = {
+        "n_games": len(df_train),
+        "seasons": [int(df_train["year"].min()), int(df_train["year"].max())],
+    }
+    print(f"Trained on {details['n_games']} games from seasons {details['seasons']}")
 
-    mse = mean_squared_error(y_test, y_pred)
-    mae = mean_absolute_error(y_test, y_pred)
-    print(f"Mean Squared Error: {mse}")
-    print(f"Mean Absolute Error: {mae}")
-
-    return model, scaler, {"mean_squared_error": mse, "mean_absolute_error": mae}
+    return model, scaler, details
 
 
 def predict(
@@ -159,7 +157,7 @@ if __name__ == "__main__":
 
     df_running_avg = build_running_avg_dataframe()
     df_training = build_training_dataframe()
-    model, scaler, metrics = train_model(df_training)
+    model, scaler, _ = train_model(df_training)
     print(make_matchup(df_running_avg, "KC", "SF").tail())
     # first team is home but this is superbowl so neither is technically home
     # week 22 (? its the superbowl) 2023 (2023 SEASON, year is 2024)

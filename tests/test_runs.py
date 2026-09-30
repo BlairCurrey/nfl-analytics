@@ -7,13 +7,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 from nfl_analytics import runs
-from nfl_analytics.config import MANIFEST_FILENAME
+from nfl_analytics.config import FEATURES, MANIFEST_FILENAME, MODEL_FILENAME
 from nfl_analytics.model import Prediction
 
 
 def make_fitted_model_and_scaler():
-    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
-    y = np.array([1.0, 2.0, 3.0])
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame(rng.normal(0, 1, (30, len(FEATURES))), columns=FEATURES)
+    y = rng.normal(0, 1, 30)
 
     scaler = StandardScaler().fit(X)
     model = LinearRegression().fit(scaler.transform(X), y)
@@ -25,9 +26,9 @@ def test_save_and_load_run_roundtrip(tmp_path):
     runs_dir = str(tmp_path)
     model, scaler = make_fitted_model_and_scaler()
     df = pd.DataFrame({"team": ["KC", "SF"], "rushing_avg": [120.0, 110.0]})
-    metrics = {"mean_squared_error": 1.0, "mean_absolute_error": 0.5}
+    details = {"training": {"n_games": 30}}
 
-    run_id = runs.save_run(model, scaler, df, metrics, runs_dir=runs_dir)
+    run_id = runs.save_run(model, scaler, df, details, runs_dir=runs_dir)
 
     assert runs.find_latest_run_id(runs_dir) == run_id
 
@@ -36,10 +37,42 @@ def test_save_and_load_run_roundtrip(tmp_path):
     )
 
     assert manifest["run_id"] == run_id
-    assert manifest["metrics"] == metrics
+    assert manifest["training"] == {"n_games": 30}
     assert list(loaded_df["team"]) == ["KC", "SF"]
     assert np.allclose(loaded_model.coef_, model.coef_)
     assert np.allclose(loaded_scaler.mean_, scaler.mean_)
+
+
+def test_json_model_predicts_like_the_original(tmp_path):
+    runs_dir = str(tmp_path)
+    model, scaler = make_fitted_model_and_scaler()
+    run_id = runs.save_run(model, scaler, pd.DataFrame({"a": [1]}), {}, runs_dir=runs_dir)
+
+    loaded_model, loaded_scaler, _, _ = runs.load_run(run_id, runs_dir=runs_dir)
+
+    X = pd.DataFrame(np.ones((2, len(FEATURES))), columns=FEATURES)
+    expected = model.predict(scaler.transform(X))
+    actual = loaded_model.predict(loaded_scaler.transform(X))
+    assert np.allclose(actual, expected)
+
+
+def test_old_pickle_format_run_raises_clear_error(tmp_path):
+    runs_dir = str(tmp_path)
+    model, scaler = make_fitted_model_and_scaler()
+    run_id = runs.save_run(model, scaler, pd.DataFrame({"a": [1]}), {}, runs_dir=runs_dir)
+    os.remove(os.path.join(runs_dir, run_id, MODEL_FILENAME))
+
+    with pytest.raises(runs.RunNotFoundError, match="JSON model format"):
+        runs.load_run(run_id, runs_dir=runs_dir)
+
+
+def test_model_with_different_features_is_rejected():
+    model, scaler = make_fitted_model_and_scaler()
+    params = runs.model_to_dict(model, scaler)
+    params["features"] = params["features"][:-1]
+
+    with pytest.raises(runs.RunNotFoundError, match="FEATURES"):
+        runs.model_from_dict(params)
 
 
 def test_incomplete_run_is_ignored(tmp_path):

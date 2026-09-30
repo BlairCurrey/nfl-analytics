@@ -1,9 +1,14 @@
 import argparse
+import os
 import sys
 import time
-from typing import List, Optional
+from datetime import datetime, timezone
+from typing import Any, List, Optional
+
+import pandas as pd
 
 from nfl_analytics.data import (
+    DATA_DIR,
     download_data,
     default_years,
     get_downloaded_years,
@@ -29,15 +34,35 @@ from nfl_analytics.schedule import (
     get_upcoming_matchups,
     load_matchups,
 )
-from nfl_analytics import runs
+from nfl_analytics.benchmark import (
+    BENCHMARK_PATH,
+    BenchmarkMismatchError,
+    check_benchmark,
+    compute_benchmark,
+    format_benchmark,
+    load_benchmark,
+    write_benchmark,
+)
+from nfl_analytics.validate import (
+    ValidationError,
+    raise_if_problems,
+    validate_predictions,
+    validate_raw_data,
+)
+from nfl_analytics import ledger, runs
+from nfl_analytics.provenance import collect_provenance
 from nfl_analytics.utils import (
     is_valid_year,
     normalize_team_abbr,
 )
 from nfl_analytics.config import (
+    BENCHMARK_TEST_SEASONS,
+    LEDGER_FILENAME,
+    START_YEAR,
     TEAMS,
     MATCHUPS_FILENAME,
     PREDICTIONS_FILENAME,
+    RELEASE_NOTES_FILENAME,
 )
 
 
@@ -111,10 +136,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="First season of the held-out test set (default: 2023).",
     )
 
-    subparsers.add_parser(
+    benchmark_parser = subparsers.add_parser(
+        "benchmark",
+        help="Run the fixed backtest and compare it with the committed "
+        "benchmark.json. Fails if they differ.",
+    )
+    benchmark_parser.add_argument(
+        "--write",
+        action="store_true",
+        help="Update benchmark.json instead of checking it. Do this (and "
+        "commit it) when you change the model on purpose.",
+    )
+    benchmark_parser.add_argument(
+        "--report",
+        metavar="path",
+        help="Also append a markdown comparison table to this file.",
+    )
+
+    pipeline_parser = subparsers.add_parser(
         "run-pipeline",
-        help="Full weekly pipeline: fetch matchups, update data, train, and "
-        "predict. Exits cleanly when there are no upcoming games (offseason).",
+        help="Full weekly pipeline: fetch matchups, update and validate data, "
+        "check the benchmark, train, predict, and grade past predictions. "
+        "Exits cleanly when there are no upcoming games (offseason).",
+    )
+    pipeline_parser.add_argument(
+        "--previous",
+        metavar="dir",
+        help="Directory holding the previous release's files. Its ledger.csv "
+        "is graded and carried forward.",
     )
 
     return parser
@@ -132,37 +181,98 @@ def run_download(years: List[int]) -> None:
         download_data()
 
 
-def run_train() -> str:
+def _require_data() -> None:
     if not get_downloaded_years():
         sys.exit(
             "No downloaded data found. Run `nfl download` first, "
             "or `nfl update` to download and train in one step."
         )
 
+
+def _load_raw() -> pd.DataFrame:
     start_time = time.time()
     print("Loading dataframe...")
     df_raw = load_dataframe_from_raw()
     print(f"Loaded dataframe in {time.time() - start_time:.1f} seconds")
+    return df_raw
 
+
+def _train_and_save(
+    df_running_avg: pd.DataFrame,
+    df_training: pd.DataFrame,
+    details: dict[str, Any],
+) -> str:
     print("Training model...")
+    model, scaler, training = train_model(df_training)
+
+    details = {
+        "training": training,
+        **details,
+        "provenance": collect_provenance(DATA_DIR),
+    }
+    return runs.save_run(model, scaler, df_running_avg, details)
+
+
+def run_train() -> str:
+    _require_data()
+    df_raw = _load_raw()
+
+    vegas_lines = extract_vegas_lines(df_raw)
     df_running_avg = build_running_avg_dataframe(df_raw)
     df_training = build_training_dataframe(df_running_avg)
-    model, scaler, metrics = train_model(df_training)
 
-    return runs.save_run(model, scaler, df_running_avg, metrics)
+    try:
+        benchmark = compute_benchmark(df_training, vegas_lines)
+    except ValueError as e:
+        print(f"Skipping benchmark: {e}")
+        benchmark = None
+
+    return _train_and_save(df_running_avg, df_training, {"benchmark": benchmark})
+
+
+def run_benchmark(write: bool, report_path: Optional[str]) -> None:
+    # The benchmark window is fixed, so it can fetch exactly the seasons it needs
+    needed = set(range(START_YEAR, BENCHMARK_TEST_SEASONS[1] + 1))
+    missing = sorted(needed - get_downloaded_years())
+    if missing:
+        print(f"Downloading season(s) needed for the benchmark: {missing}")
+        download_data(missing)
+
+    df_raw = _load_raw()
+    df_raw = df_raw[df_raw["year"].isin(needed)]
+
+    print("Building training data and running the benchmark...")
+    vegas_lines = extract_vegas_lines(df_raw)
+    df_training = build_training_dataframe(build_running_avg_dataframe(df_raw))
+    benchmark = compute_benchmark(df_training, vegas_lines)
+
+    committed = load_benchmark() if os.path.isfile(BENCHMARK_PATH) else None
+    table = format_benchmark(benchmark, committed)
+    print()
+    print(table)
+
+    if report_path:
+        with open(report_path, "a") as f:
+            f.write(table + "\n")
+
+    if write:
+        write_benchmark(benchmark)
+        return
+
+    if committed is None:
+        sys.exit("No committed benchmark.json. Run `nfl benchmark --write`.")
+
+    try:
+        check_benchmark(benchmark)
+    except BenchmarkMismatchError as e:
+        sys.exit(str(e))
+
+    print("Benchmark matches benchmark.json.")
 
 
 def run_evaluate(test_since: int) -> None:
-    if not get_downloaded_years():
-        sys.exit(
-            "No downloaded data found. Run `nfl download` first, "
-            "or `nfl update` to download and train in one step."
-        )
-
-    start_time = time.time()
-    print("Loading dataframe...")
-    df_raw = load_dataframe_from_raw()
-    print(f"Loaded dataframe in {time.time() - start_time:.1f} seconds")
+    _require_data()
+    df_raw = _load_raw()
 
     print("Building training data and evaluating...")
     vegas_lines = extract_vegas_lines(df_raw)
@@ -178,7 +288,7 @@ def run_evaluate(test_since: int) -> None:
     print(format_report(results))
 
 
-def run_update() -> str:
+def _refresh_data() -> None:
     downloaded = get_downloaded_years()
     missing = set(default_years()) - downloaded
     # Always re-download the current season: its file grows as games are played
@@ -187,6 +297,9 @@ def run_update() -> str:
     print(f"Downloading season(s): {to_download}")
     download_data(to_download)
 
+
+def run_update() -> str:
+    _refresh_data()
     return run_train()
 
 
@@ -223,43 +336,51 @@ def run_predict(home_team: str, away_team: str, run_id: Optional[str]) -> None:
     )
 
 
-def run_predict_upcoming(
-    matchups_path: Optional[str],
-    run_id: Optional[str],
-    matchups: Optional[List[Matchup]] = None,
-) -> None:
-    if matchups is None:
-        if matchups_path:
-            print(f"Loading matchups from {matchups_path}")
-            try:
-                matchups = load_matchups(matchups_path)
-            except FileNotFoundError:
-                sys.exit(f"No matchup file found at {matchups_path}.")
-        else:
-            print("Fetching upcoming matchups...")
-            matchups = get_upcoming_matchups()
+def _predict_matchups(
+    model, scaler, df_running_avg: pd.DataFrame, matchups: List[Matchup]
+) -> List[Prediction]:
+    predictions: List[Prediction] = []
+
+    for matchup in matchups:
+        home_team, away_team = _validate_matchup(matchup.home_team, matchup.away_team)
+        predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
+        predictions.append(
+            Prediction(
+                home_team, away_team, predicted_spread, matchup.season, matchup.week
+            )
+        )
+        print(
+            f"{home_team} (home) vs {away_team} (away): {predicted_spread:.1f}"
+        )
+
+    return predictions
+
+
+def run_predict_upcoming(matchups_path: Optional[str], run_id: Optional[str]) -> None:
+    if matchups_path:
+        print(f"Loading matchups from {matchups_path}")
+        try:
+            matchups = load_matchups(matchups_path)
+        except FileNotFoundError:
+            sys.exit(f"No matchup file found at {matchups_path}.")
+    else:
+        print("Fetching upcoming matchups...")
+        matchups = get_upcoming_matchups()
 
     if not matchups:
         print("No upcoming matchups found.")
         return
 
     model, scaler, df_running_avg, manifest = _load_run_or_exit(run_id)
-
-    predictions: List[Prediction] = []
-
-    for matchup in matchups:
-        home_team, away_team = _validate_matchup(matchup.home_team, matchup.away_team)
-        predicted_spread = predict(model, scaler, df_running_avg, home_team, away_team)
-        predictions.append(Prediction(home_team, away_team, predicted_spread))
-        print(
-            f"{home_team} (home) vs {away_team} (away): {predicted_spread:.1f}"
-        )
+    predictions = _predict_matchups(model, scaler, df_running_avg, matchups)
 
     runs.save_run_json(manifest["run_id"], MATCHUPS_FILENAME, matchups)
     runs.save_run_json(manifest["run_id"], PREDICTIONS_FILENAME, predictions)
 
 
-def run_pipeline() -> None:
+def run_pipeline(previous_dir: Optional[str]) -> None:
+    """Every check runs before anything is written for publishing, so a
+    failure leaves nothing to release."""
     # Check for matchups first: during the offseason there is nothing to
     # predict, so skip the expensive download/train steps entirely.
     print("Fetching upcoming matchups...")
@@ -269,9 +390,114 @@ def run_pipeline() -> None:
         print("No upcoming matchups (offseason?). Nothing to do.")
         return
 
-    print(f"Found {len(matchups)} upcoming matchup(s).")
-    run_id = run_update()
-    run_predict_upcoming(None, run_id, matchups=matchups)
+    season, week = matchups[0].season, matchups[0].week
+    print(f"Found {len(matchups)} upcoming matchup(s) in {season} week {week}.")
+
+    _refresh_data()
+    df_raw = _load_raw()
+
+    try:
+        raise_if_problems(
+            "Play-by-play data", validate_raw_data(df_raw, season, week)
+        )
+    except ValidationError as e:
+        sys.exit(str(e))
+
+    vegas_lines = extract_vegas_lines(df_raw)
+    results = ledger.game_results(df_raw)
+    df_running_avg = build_running_avg_dataframe(df_raw)
+    del df_raw
+    df_training = build_training_dataframe(df_running_avg)
+
+    # The committed benchmark was reviewed with the code. If recomputing it
+    # gives different numbers, the data or dependencies changed underneath.
+    print("Checking the benchmark...")
+    benchmark = compute_benchmark(df_training, vegas_lines)
+    try:
+        check_benchmark(benchmark)
+    except BenchmarkMismatchError as e:
+        sys.exit(str(e))
+
+    run_id = _train_and_save(
+        df_running_avg,
+        df_training,
+        {"benchmark": benchmark, "target": {"season": season, "week": week}},
+    )
+
+    # Predict from the saved run, not the in-memory model, so the published
+    # files are exactly what produced the published predictions
+    model, scaler, df_running_avg, _ = _load_run_or_exit(run_id)
+    predictions = _predict_matchups(model, scaler, df_running_avg, matchups)
+
+    try:
+        raise_if_problems(
+            "Predictions",
+            validate_predictions(matchups, predictions, datetime.now(timezone.utc)),
+        )
+    except ValidationError as e:
+        sys.exit(str(e))
+
+    previous_ledger = (
+        os.path.join(previous_dir, LEDGER_FILENAME) if previous_dir else ""
+    )
+    graded = ledger.grade(ledger.load_ledger(previous_ledger), results)
+    updated = ledger.add_predictions(graded, matchups, predictions, run_id)
+
+    run_dir = runs.get_run_dir(run_id)
+    ledger.save_ledger(updated, os.path.join(run_dir, LEDGER_FILENAME))
+    runs.save_run_json(run_id, MATCHUPS_FILENAME, matchups)
+    runs.save_run_json(run_id, PREDICTIONS_FILENAME, predictions)
+
+    notes = _release_notes(matchups, predictions, updated, benchmark)
+    with open(os.path.join(run_dir, RELEASE_NOTES_FILENAME), "w") as f:
+        f.write(notes)
+    print()
+    print(notes)
+
+
+def _release_notes(
+    matchups: List[Matchup],
+    predictions: List[Prediction],
+    ledger_df: pd.DataFrame,
+    benchmark: dict[str, Any],
+) -> str:
+    season, week = matchups[0].season, matchups[0].week
+    lines = [
+        f"Predicted spreads for {season} week {week}, published before kickoff. "
+        "Spreads are the predicted home margin: 3.5 means the home team by 3.5.",
+        "",
+        "| home | away | predicted spread | kickoff (UTC) |",
+        "| --- | --- | --- | --- |",
+    ]
+    for m, p in zip(matchups, predictions):
+        lines.append(
+            f"| {m.home_team} | {m.away_team} | {p.spread:+.1f} | {m.kickoff} |"
+        )
+
+    lines += [
+        "",
+        "## Scorecard",
+        "",
+        "Every published prediction, graded against the final score and the "
+        "Vegas closing line (full history in `ledger.csv`).",
+        "",
+        ledger.summarize(ledger_df),
+        "",
+        "## Benchmark",
+        "",
+        format_benchmark(benchmark),
+        "",
+        "## Files",
+        "",
+        "- **predictions.json / matchups.json:** this week's predictions and games",
+        "- **ledger.csv:** every published prediction, with results once played",
+        "- **model.json:** scaler and regression parameters (plain JSON, no pickles)",
+        "- **running_average.csv.gz:** team running averages used as model inputs",
+        "- **manifest.json:** training info, benchmark, and provenance (git SHA, "
+        "`uv.lock` and data hashes, library versions)",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def main():
@@ -283,6 +509,8 @@ def main():
         run_train()
     elif args.command == "evaluate":
         run_evaluate(args.test_since)
+    elif args.command == "benchmark":
+        run_benchmark(args.write, args.report)
     elif args.command == "update":
         run_update()
     elif args.command == "predict":
@@ -290,7 +518,7 @@ def main():
     elif args.command == "predict-upcoming":
         run_predict_upcoming(args.matchups, args.run)
     elif args.command == "run-pipeline":
-        run_pipeline()
+        run_pipeline(args.previous)
 
 
 if __name__ == "__main__":

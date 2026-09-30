@@ -313,7 +313,6 @@ name = "nfl-analytics"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "joblib" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "scikit-learn" },
@@ -328,7 +327,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "joblib", specifier = ">=1.3.0" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "scikit-learn", specifier = ">=1.4.0" },

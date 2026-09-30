@@ -5,12 +5,19 @@ START_YEAR = 1999
 # previous-season mean, decaying as real games accumulate. Chosen empirically
 # via `nfl evaluate` (see .claude/improvements.md).
 PRIOR_PSEUDO_GAMES = 4
+# Fixed backtest window for `nfl benchmark`: fit on seasons before the first,
+# score on these completed seasons. The results are committed to
+# BENCHMARK_FILENAME, so any change to the recipe (code, data, dependencies)
+# shows up as a diff. Move the window only deliberately, in its own commit.
+BENCHMARK_TEST_SEASONS = (2023, 2025)
+BENCHMARK_FILENAME = "benchmark.json"
 MANIFEST_FILENAME = "manifest.json"
-MODEL_FILENAME = "model.joblib"
-SCALER_FILENAME = "scaler.joblib"
+MODEL_FILENAME = "model.json"
 RUNNING_AVG_FILENAME = "running_average.csv.gz"
 MATCHUPS_FILENAME = "matchups.json"
 PREDICTIONS_FILENAME = "predictions.json"
+LEDGER_FILENAME = "ledger.csv"
+RELEASE_NOTES_FILENAME = "release_notes.md"
 FEATURES = [
     "away_rushing_avg",
     "home_rushing_avg",

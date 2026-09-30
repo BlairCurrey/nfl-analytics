@@ -1,84 +1,184 @@
-name: NFL Spread Predictor Pipeline
+name: Weekly predictions
+
+# Publishes one immutable release per NFL week (predictions-<season>-w<week>),
+# made before that week's first kickoff. Every check runs before anything is
+# published: data validation, the committed benchmark, and prediction sanity
+# checks. Any failure publishes nothing and opens a pipeline-failure issue.
 
 on:
   schedule:
-    # Tuesdays 10:00 UTC: after Monday Night Football, before the next week's games.
-    # During the offseason `nfl run-pipeline` finds no matchups and exits cleanly.
+    # Tuesday after Monday Night Football, with a Wednesday retry before
+    # Thursday night's game. Both target the next unplayed week; if Tuesday
+    # already published it, Wednesday finds the release and stops. Offseason
+    # runs find no games and exit cleanly.
     - cron: "0 10 * * 2"
+    - cron: "0 10 * * 3"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-predictions
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  predict:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: ./.github/actions/setup
+
+      - name: Run tests
+        run: uv run pytest
+
+  predict:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      publish: ${{ steps.release.outputs.publish }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup
         with:
-          enable-cache: true
+          data: "true"
 
-      - name: Install dependencies
-        run: uv sync --frozen
-
-      # Restores the most recent play-by-play data so `nfl run-pipeline` only
-      # downloads missing seasons and the in-progress season. The key never
-      # matches so a fresh cache is saved after every run.
-      - name: Cache play-by-play data
-        uses: actions/cache@v4
-        with:
-          path: nfl_analytics/data
-          key: pbp-data-${{ github.run_id }}
-          restore-keys: |
-            pbp-data-
-
-      # Training loads every season into one dataframe and can exhaust runner memory
-      # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
-      - name: Increase swapfile
+      # The ledger of every published prediction lives in the latest release
+      # and is carried forward. A failed lookup fails the run rather than
+      # silently starting a new, empty ledger.
+      - name: Download previous ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          df -h
-          sudo swapoff -a
-          sudo fallocate -l 12G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          sudo swapon --show
+          mkdir -p previous
+          assets=$(gh release view --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+          if grep -qx ledger.csv <<< "$assets"; then
+            gh release download --repo "$GITHUB_REPOSITORY" --pattern ledger.csv --dir previous
+          else
+            echo "Latest release has no ledger.csv; starting a new ledger."
+          fi
 
       - name: Run weekly pipeline
-        run: uv run nfl run-pipeline
+        run: uv run nfl run-pipeline --previous previous
 
-      - name: Locate latest run
-        id: latest-run
+      - name: Prepare release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           run_dir=$(ls -d nfl_analytics/assets/runs/*/ 2>/dev/null | sort | tail -n 1)
 
-          if [[ -n "$run_dir" && -f "$run_dir/predictions.json" ]]; then
-            echo "Latest run with predictions: $run_dir"
-            echo "dir=$run_dir" >> "$GITHUB_OUTPUT"
-            echo "has_predictions=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No predictions produced (offseason?). Skipping release."
-            echo "has_predictions=false" >> "$GITHUB_OUTPUT"
+          if [[ -z "$run_dir" || ! -f "$run_dir/predictions.json" ]]; then
+            echo "No predictions produced (offseason?). Nothing to publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      - name: Publish predictions release
-        if: steps.latest-run.outputs.has_predictions == 'true'
-        uses: softprops/action-gh-release@v2
+          season=$(jq -r .target.season "$run_dir/manifest.json")
+          week=$(jq -r .target.week "$run_dir/manifest.json")
+          tag=$(printf 'predictions-%s-w%02d' "$season" "$week")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+          # Releases are immutable: never replace one that was already published
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$tag is already published. Nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          mkdir -p release/assets
+          cp "$run_dir"/* release/assets/
+          mv release/assets/release_notes.md release/notes.md
+          (cd release/assets && sha256sum * > SHA256SUMS)
+
+          cat >> release/notes.md <<EOF
+          - **SHA256SUMS:** checksums for every file
+
+          Every file has a build provenance attestation. Verify one with
+          \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
+          EOF
+
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release files
+        if: steps.release.outputs.publish == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          files: ${{ steps.latest-run.outputs.dir }}*
-          tag_name: spread-predictor
-          body: |
-            Latest trained model and spread predictions for upcoming games,
-            published automatically every week during the season.
+          name: release
+          path: release/
+          retention-days: 7
 
-            - **predictions.json:** predicted spreads relative to the home team
-            - **matchups.json:** the upcoming matchups that were predicted
-            - **model.joblib / scaler.joblib:** the trained model and input scaler
-            - **running_average.csv.gz:** running averages used to form matchup inputs
-            - **manifest.json:** run id, timestamp, and test-set error metrics
+  # Only this job can write to the repository, and it runs no project code.
+  publish:
+    needs: predict
+    if: needs.predict.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: release
 
-            All files come from the same training run and can be used together
-            with `nfl predict`.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release/assets/*
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.predict.outputs.tag }}
+        run: |
+          gh release create "$TAG" release/assets/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Predictions: ${TAG#predictions-}" \
+            --notes-file release/notes.md \
+            --latest
+
+  notify-failure:
+    needs: [test, predict, publish]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create pipeline-failure --repo "$GITHUB_REPOSITORY" --force \
+            --color B60205 --description "Weekly predictions pipeline failed"
+
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label pipeline-failure \
+            --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          body="The weekly predictions run failed and nothing was published: $RUN_URL
+
+          If the Wednesday retry hasn't run yet, it will try again. Close this issue once resolved."
+
+          if [[ -n "$issue" ]]; then
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --label pipeline-failure \
+              --title "Weekly predictions pipeline failed" --body "$body"
+          fi

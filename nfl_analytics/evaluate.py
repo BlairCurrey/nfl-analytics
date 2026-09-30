@@ -11,7 +11,7 @@ Three predictors are compared on the same held-out games:
   positive = home favored)
 """
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,10 @@ def evaluate_spread_model(
     df_training: pd.DataFrame,
     vegas_lines: pd.DataFrame,
     test_since: int = 2023,
+    test_until: Optional[int] = None,
 ) -> dict[str, Any]:
+    """Fit on seasons before `test_since`; score on seasons from `test_since`
+    through `test_until` (inclusive; default: every later season)."""
     # The training dataframe has two identical rows per game (one per team
     # perspective); use one clean row per game. Rows without complete features
     # (e.g. week 1 for a team with no prior season) are dropped, matching what
@@ -41,7 +44,10 @@ def evaluate_spread_model(
     )
 
     train = df[df["year"] < test_since]
-    test = df[df["year"] >= test_since].merge(vegas_lines, on="game_id", how="left")
+    test = df[df["year"] >= test_since]
+    if test_until is not None:
+        test = test[test["year"] <= test_until]
+    test = test.merge(vegas_lines, on="game_id", how="left")
 
     if train.empty or test.empty:
         raise ValueError(
@@ -68,6 +74,7 @@ def evaluate_spread_model(
 
     results: dict[str, Any] = {
         "test_since": test_since,
+        "test_until": int(test["year"].max()),
         "n_train_games": len(train),
         "n_test_games": len(test),
         "home_field_advantage": train["home_spread"].mean(),
@@ -141,7 +148,8 @@ def format_report(results: dict[str, Any]) -> str:
     cal = results["calibration"]
     lines = [
         f"Held-out evaluation: trained on seasons before {results['test_since']}, "
-        f"tested on {results['n_test_games']} games since "
+        f"tested on {results['n_test_games']} games from "
+        f"{results['test_since']}–{results['test_until']} "
         f"({results['n_train_games']} training games)",
         f"Home-field advantage (train mean home margin): "
         f"{results['home_field_advantage']:+.2f}",

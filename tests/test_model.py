@@ -95,16 +95,33 @@ def test_train_model_uses_complete_rows_including_week_1():
     df = pd.DataFrame({col: rng.normal(0, 1, n) for col in FEATURES})
     df["home_spread"] = rng.normal(2, 10, n)
     df["week"] = [1] * 10 + [2] * 30
+    df["year"] = [2024] * 20 + [2025] * 20
+    df["game_id"] = [f"g{i}" for i in range(n)]
 
     # a week-1 row without features (team with no prior season) must be dropped,
     # not imputed; complete week-1 rows train fine
     df.loc[0, FEATURES] = np.nan
 
-    model, scaler, metrics = train_model(df)
+    model, scaler, details = train_model(df)
 
     assert model.coef_.shape == (len(FEATURES),)
-    assert "mean_absolute_error" in metrics
-    assert not np.isnan(metrics["mean_absolute_error"])
+    # every complete game is used: nothing is held out
+    assert details == {"n_games": n - 1, "seasons": [2024, 2025]}
+
+
+def test_train_model_counts_each_game_once():
+    rng = np.random.default_rng(1)
+    games = pd.DataFrame({col: rng.normal(0, 1, 20) for col in FEATURES})
+    games["home_spread"] = rng.normal(2, 10, 20)
+    games["year"] = 2025
+    games["game_id"] = [f"g{i}" for i in range(20)]
+
+    # build_training_dataframe emits two identical rows per game
+    doubled = pd.concat([games, games], ignore_index=True)
+
+    _, _, details = train_model(doubled)
+
+    assert details["n_games"] == 20
 
 
 def test_missing_week_raises_clear_error():

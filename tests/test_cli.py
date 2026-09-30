@@ -47,5 +47,18 @@ def test_predict_upcoming_options(parser):
 
 
 def test_simple_commands(parser):
-    for command in ["train", "update", "run-pipeline"]:
+    for command in ["train", "update", "run-pipeline", "benchmark"]:
         assert parser.parse_args([command]).command == command
+
+
+def test_benchmark_options(parser):
+    args = parser.parse_args(["benchmark", "--write", "--report", "out.md"])
+    assert args.write is True
+    assert args.report == "out.md"
+    assert parser.parse_args(["benchmark"]).write is False
+
+
+def test_run_pipeline_previous_dir(parser):
+    args = parser.parse_args(["run-pipeline", "--previous", "prev"])
+    assert args.previous == "prev"
+    assert parser.parse_args(["run-pipeline"]).previous is None

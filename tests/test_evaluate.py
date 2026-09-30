@@ -78,6 +78,17 @@ def test_evaluate_returns_expected_shape():
     assert results["vs_vegas"]["delta_mae_ci95"] > 0
 
 
+def test_evaluate_test_until_bounds_the_test_seasons():
+    df = make_training_df(30, [2020, 2021, 2022, 2023])
+    vegas = make_vegas_df(df)
+
+    results = evaluate_spread_model(df, vegas, test_since=2021, test_until=2022)
+
+    assert results["n_train_games"] == 30
+    assert results["n_test_games"] == 60
+    assert results["test_until"] == 2022
+
+
 def test_evaluate_without_vegas_lines():
     df = make_training_df(40, [2021, 2022, 2023])
     empty_vegas = pd.DataFrame({"game_id": [], "spread_line": []})
