@@ -51,12 +51,15 @@ from nfl_analytics.validate import (
 )
 from nfl_analytics import ledger, runs
 from nfl_analytics.lines import fetch_lines
+from nfl_analytics.backtest import backtest
 from nfl_analytics.provenance import collect_provenance
 from nfl_analytics.utils import (
     is_valid_year,
     normalize_team_abbr,
 )
 from nfl_analytics.config import (
+    BACKTEST_FILENAME,
+    BACKTEST_SINCE,
     BENCHMARK_TEST_SEASONS,
     LEDGER_FILENAME,
     START_YEAR,
@@ -152,6 +155,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--report",
         metavar="path",
         help="Also append a markdown comparison table to this file.",
+    )
+
+    backtest_parser = subparsers.add_parser(
+        "backtest",
+        help="Replay past weeks: train only on games before each week and "
+        "predict it. Writes the results in the ledger's format.",
+    )
+    backtest_parser.add_argument(
+        "--since",
+        type=int,
+        default=BACKTEST_SINCE,
+        metavar="year",
+        help=f"First season to replay (default: {BACKTEST_SINCE}).",
+    )
+    backtest_parser.add_argument(
+        "--output",
+        default=BACKTEST_FILENAME,
+        metavar="path",
+        help=f"Where to write the results (default: {BACKTEST_FILENAME}).",
     )
 
     pipeline_parser = subparsers.add_parser(
@@ -287,6 +309,20 @@ def run_evaluate(test_since: int) -> None:
 
     print()
     print(format_report(results))
+
+
+def run_backtest(since: int, output: str) -> None:
+    _require_data()
+    df_raw = _load_raw()
+    results = ledger.game_results(df_raw)
+    df_training = build_training_dataframe(build_running_avg_dataframe(df_raw))
+    del df_raw
+
+    df_backtest = backtest(df_training, results, since)
+    df_backtest.to_csv(output, index=False)
+    print(f"Saved {output}")
+    print()
+    print(ledger.summarize(df_backtest))
 
 
 def _refresh_data() -> None:
@@ -447,6 +483,16 @@ def run_pipeline(previous_dir: Optional[str]) -> None:
 
     run_dir = runs.get_run_dir(run_id)
     ledger.save_ledger(updated, os.path.join(run_dir, LEDGER_FILENAME))
+
+    # Replay recent weeks with this run's recipe, skipping any week that was
+    # actually published: those belong to the ledger
+    published_weeks = set(
+        zip(updated["season"].astype(int), updated["week"].astype(int))
+    )
+    df_backtest = backtest(
+        df_training, results, BACKTEST_SINCE, (season, week), published_weeks
+    )
+    df_backtest.to_csv(os.path.join(run_dir, BACKTEST_FILENAME), index=False)
     runs.save_run_json(run_id, MATCHUPS_FILENAME, matchups)
     runs.save_run_json(run_id, PREDICTIONS_FILENAME, predictions)
 
@@ -528,6 +574,8 @@ def _release_notes(
         "",
         "- **predictions.json / matchups.json:** this week's predictions and games",
         "- **ledger.csv:** every published prediction, with results once played",
+        f"- **backtest.csv:** what this model would have predicted each week since "
+        f"{BACKTEST_SINCE}, training only on earlier games (not published before kickoff)",
         "- **model.json:** scaler and regression parameters (plain JSON, no pickles)",
         "- **running_average.csv.gz:** team running averages used as model inputs",
         "- **manifest.json:** training info, benchmark, and provenance (git SHA, "
@@ -548,6 +596,8 @@ def main():
         run_evaluate(args.test_since)
     elif args.command == "benchmark":
         run_benchmark(args.write, args.report)
+    elif args.command == "backtest":
+        run_backtest(args.since, args.output)
     elif args.command == "update":
         run_update()
     elif args.command == "predict":

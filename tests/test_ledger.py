@@ -23,7 +23,7 @@ def results(rows):
         [
             {"year": s, "week": w, "home_team": h, "away_team": a,
              "game_id": f"{s}_{w:02d}_{a}_{h}", "spread_line": line,
-             "home_score": hs, "away_score": as_}
+             "home_score": hs, "away_score": as_, "game_date": f"{s}-10-04"}
             for s, w, h, a, line, hs, as_ in rows
         ]
     )

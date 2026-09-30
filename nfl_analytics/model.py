@@ -24,6 +24,7 @@ class Prediction:
 
 def train_model(
     df_training: pd.DataFrame,
+    verbose: bool = True,
 ) -> Tuple[LinearRegression, StandardScaler, dict[str, Any]]:
     """Fit on every usable game. Nothing is held out: the shipped model should
     learn from all the data. Measure accuracy with `nfl benchmark` / `nfl
@@ -50,7 +51,8 @@ def train_model(
         "n_games": len(df_train),
         "seasons": [int(df_train["year"].min()), int(df_train["year"].max())],
     }
-    print(f"Trained on {details['n_games']} games from seasons {details['seasons']}")
+    if verbose:
+        print(f"Trained on {details['n_games']} games from seasons {details['seasons']}")
 
     return model, scaler, details
 

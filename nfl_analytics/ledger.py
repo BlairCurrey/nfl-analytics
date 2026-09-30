@@ -84,7 +84,7 @@ def add_predictions(
 
 
 def game_results(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """One row per played game: final margin and closing line."""
+    """One row per played game: final margin, closing line, and date."""
     games = df_raw.drop_duplicates(subset="game_id")
 
     return pd.DataFrame(
@@ -96,6 +96,7 @@ def game_results(df_raw: pd.DataFrame) -> pd.DataFrame:
             "game_id": games["game_id"],
             "vegas_line": games["spread_line"],
             "actual_margin": games["home_score"] - games["away_score"],
+            "game_date": games["game_date"],
         }
     )
 

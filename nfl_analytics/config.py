@@ -17,6 +17,9 @@ RUNNING_AVG_FILENAME = "running_average.csv.gz"
 MATCHUPS_FILENAME = "matchups.json"
 PREDICTIONS_FILENAME = "predictions.json"
 LEDGER_FILENAME = "ledger.csv"
+# `nfl backtest` / the weekly run replay every week from this season on
+BACKTEST_SINCE = 2021
+BACKTEST_FILENAME = "backtest.csv"
 RELEASE_NOTES_FILENAME = "release_notes.md"
 FEATURES = [
     "away_rushing_avg",

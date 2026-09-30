@@ -316,6 +316,17 @@ h2 {
 }
 .chip:hover { background: var(--model-wash); color: var(--ink); }
 .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip.backtest { border-style: dashed; }
+#source-controls { margin-top: -8px; }
+.week-legend { margin: -8px 0 16px; font-size: var(--step--1); color: var(--muted); }
+.backtest-note {
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--axis);
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  max-width: 75ch;
+}
 
 /* Record */
 .tiles {
@@ -521,9 +532,10 @@ code {
   <section id="record" aria-labelledby="record-title">
     <div class="section-head">
       <h2 id="record-title">Track record</h2>
-      <p>Every published prediction, graded against the final score and the Vegas closing line. Misses are in points.</p>
+      <p>Predictions graded against the final score and the Vegas closing line. Published predictions were made before kickoff; backtests replay earlier weeks and are always shown separately. Misses are in points.</p>
     </div>
     <div class="controls" id="season-controls" role="group" aria-label="Season"></div>
+    <div class="controls" id="source-controls" role="group" aria-label="Predictions shown" hidden></div>
     <div id="record-body"></div>
   </section>
 
@@ -533,6 +545,7 @@ code {
       <p>Against the spread, the model takes whichever side of the closing line its prediction falls on. A win means the final margin landed on that side.</p>
     </div>
     <div class="controls" id="week-controls" role="group" aria-label="Week"></div>
+    <p class="week-legend" id="week-legend" hidden>Dashed weeks are backtests; solid weeks were published before kickoff.</p>
     <div id="results-body"></div>
   </section>
 
@@ -577,7 +590,15 @@ const el = (tag, className, text) => {
 /* ---------- data ---------- */
 
 // The ledger has no quoted fields (team codes, ISO times, numbers, run ids)
-function parseLedger(text) {
+// A date-only kickoff (backtests only know the game date) is read as a local
+// calendar date, so it doesn't shift a day in western time zones
+function parseKickoff(value) {
+  if (!value) return null;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return dateOnly ? new Date(+dateOnly[1], +dateOnly[2] - 1, +dateOnly[3]) : new Date(value);
+}
+
+function parseLedger(text, source) {
   const [header, ...lines] = text.trim().split(/\r?\n/);
   const cols = header.split(",");
   const num = (v) => (v === "" || v === undefined ? null : Number(v));
@@ -589,12 +610,13 @@ function parseLedger(text) {
       week: num(row.week),
       home: row.home_team,
       away: row.away_team,
-      kickoff: row.kickoff ? new Date(row.kickoff) : null,
+      kickoff: parseKickoff(row.kickoff),
       predicted: num(row.predicted_spread),
       line: num(row.vegas_line),
       actual: num(row.actual_margin),
       gameId: row.game_id,
       open: num(row.line_at_publish), // Vegas line when the prediction was published
+      source, // "published" (the ledger) or "backtest"
     };
   });
 }
@@ -882,15 +904,17 @@ function weeklySeries(rows) {
   return points;
 }
 
-function renderRecord(ledger, season) {
+// `ledger` holds one source only (published or backtest); never mix them
+function renderRecord(ledger, season, source) {
   const body = $("record-body");
   body.replaceChildren();
+  if (source === "backtest") body.append(el("p", "backtest-note", BACKTEST_NOTE));
 
   const rows = ledger.filter((r) => r.season === season);
   const s = stats(rows);
 
   if (s.n === 0) {
-    body.append(el("p", "empty", `No ${season} games have been graded yet. Results appear here after each week's games are played.`));
+    body.append(el("p", "empty", `No ${season} published predictions have been graded yet. Results appear here after each week's games are played.`));
     return;
   }
 
@@ -928,7 +952,7 @@ function renderRecord(ledger, season) {
       el(
         "p",
         "alltime",
-        `All seasons: ${all.n.toLocaleString()} games, average miss ${fmt1(all.modelMae)} vs Vegas ${fmt1(all.vegasMae)}, ` +
+        `All ${source === "backtest" ? "backtested" : "published"} seasons: ${all.n.toLocaleString()} games, average miss ${fmt1(all.modelMae)} vs Vegas ${fmt1(all.vegasMae)}, ` +
           `${recordText(all)} against the spread.`
       )
     );
@@ -1168,6 +1192,7 @@ function renderResults(ledger, season, week) {
     body.append(el("p", "empty", "No predictions for this week."));
     return;
   }
+  if (rows[0].source === "backtest") body.append(el("p", "backtest-note", BACKTEST_NOTE));
 
   const wrap = el("div", "table-scroll");
   const table = el("table");
@@ -1235,8 +1260,9 @@ function renderResults(ledger, season, week) {
 function chips(container, items, selected, onSelect) {
   container.replaceChildren();
   for (const item of items) {
-    const b = el("button", "chip", item.label);
+    const b = el("button", item.className ? `chip ${item.className}` : "chip", item.label);
     b.type = "button";
+    if (item.title) b.title = item.title;
     b.setAttribute("aria-pressed", String(item.value === selected));
     b.addEventListener("click", () => onSelect(item.value));
     container.append(b);
@@ -1276,7 +1302,7 @@ function renderFacts(manifest) {
 
   const files = el("span");
   const base = `https://github.com/${REPO}/releases/latest/download/`;
-  ["predictions.json", "ledger.csv", "model.json", "manifest.json"].forEach((f, i) => {
+  ["predictions.json", "ledger.csv", "backtest.csv", "model.json", "manifest.json"].forEach((f, i) => {
     if (i) files.append(document.createTextNode(", "));
     files.append(link(f, base + f));
   });
@@ -1289,16 +1315,27 @@ function renderFacts(manifest) {
 /* ---------- boot ---------- */
 
 async function load() {
-  const [manifestRes, ledgerRes] = await Promise.all([
-    fetch(`${DATA_BASE}manifest.json`, { cache: "no-cache" }),
-    fetch(`${DATA_BASE}ledger.csv`, { cache: "no-cache" }),
+  const get = (file) => fetch(`${DATA_BASE}${file}`, { cache: "no-cache" });
+  const [manifestRes, ledgerRes, backtestRes] = await Promise.all([
+    get("manifest.json"),
+    get("ledger.csv"),
+    get("backtest.csv"),
   ]);
   const manifest = manifestRes.ok ? await manifestRes.json() : null;
-  const ledger = ledgerRes.ok ? parseLedger(await ledgerRes.text()) : [];
-  return { manifest, ledger };
+  const ledger = ledgerRes.ok ? parseLedger(await ledgerRes.text(), "published") : [];
+  const backtest = backtestRes.ok ? parseLedger(await backtestRes.text(), "backtest") : [];
+  return { manifest, ledger, backtest };
 }
 
-function start({ manifest, ledger }) {
+const SOURCES = {
+  published: "Published",
+  backtest: "Backtest",
+};
+const BACKTEST_NOTE =
+  "Backtest: what today's model would have predicted, training only on games played before each week. " +
+  "These weren't published before kickoff, so they're shown separately from the real record.";
+
+function start({ manifest, ledger, backtest }) {
   $("demo-notice").hidden = !manifest?.demo;
 
   const target = manifest?.target;
@@ -1311,32 +1348,62 @@ function start({ manifest, ledger }) {
   renderGames(current);
   renderFacts(manifest);
 
-  const seasons = [...new Set(ledger.map((r) => r.season))].sort((a, b) => b - a);
+  // Weeks never overlap: the weekly run skips published weeks when backtesting
+  const rows = ledger.concat(backtest);
+  const seasons = [...new Set(rows.map((r) => r.season))].sort((a, b) => b - a);
   if (seasons.length === 0) {
     $("record-body").append(el("p", "empty", "No predictions have been graded yet. Results appear here after the first published week is played."));
     $("results-body").append(el("p", "empty", "Past weeks will be listed here."));
     return;
   }
 
-  const state = { season: target?.season ?? seasons[0], week: null };
+  const state = { season: target?.season ?? seasons[0], source: null, week: null };
 
   const selectWeek = (week) => {
     state.week = week;
-    const weeks = [...new Set(ledger.filter((r) => r.season === state.season).map((r) => r.week))].sort((a, b) => a - b);
+    const inSeason = rows.filter((r) => r.season === state.season);
+    const weeks = [...new Set(inSeason.map((r) => r.week))].sort((a, b) => a - b);
+    const isBacktest = (w) => inSeason.some((r) => r.week === w && r.source === "backtest");
     chips(
       $("week-controls"),
-      weeks.map((w) => ({ value: w, label: POSTSEASON[w] ?? `Wk ${w}` })),
+      weeks.map((w) => ({
+        value: w,
+        label: POSTSEASON[w] ?? `Wk ${w}`,
+        className: isBacktest(w) ? "backtest" : "",
+        title: isBacktest(w) ? "Backtest" : "",
+      })),
       week,
       selectWeek
     );
-    renderResults(ledger, state.season, week);
+    const hasBoth = weeks.some(isBacktest) && weeks.some((w) => !isBacktest(w));
+    $("week-legend").hidden = !hasBoth;
+    renderResults(rows, state.season, week);
+  };
+
+  const selectSource = (source) => {
+    state.source = source;
+    const available = Object.keys(SOURCES).filter((src) =>
+      rows.some((r) => r.season === state.season && r.source === src && isGraded(r))
+    );
+    const controls = $("source-controls");
+    if (available.length > 1) {
+      chips(controls, available.map((src) => ({ value: src, label: SOURCES[src] })), source, selectSource);
+      controls.hidden = false;
+    } else {
+      controls.hidden = true;
+    }
+    renderRecord(rows.filter((r) => r.source === source), state.season, source);
   };
 
   const selectSeason = (season) => {
     state.season = season;
     chips($("season-controls"), seasons.map((s) => ({ value: s, label: String(s) })), season, selectSeason);
-    renderRecord(ledger, season);
-    const inSeason = ledger.filter((r) => r.season === season);
+
+    const inSeason = rows.filter((r) => r.season === season);
+    const hasPublished = inSeason.some((r) => r.source === "published" && isGraded(r));
+    const hasBacktest = inSeason.some((r) => r.source === "backtest");
+    selectSource(hasPublished || !hasBacktest ? "published" : "backtest");
+
     const graded = inSeason.filter(isGraded).map((r) => r.week);
     selectWeek(graded.length ? Math.max(...graded) : Math.max(...inSeason.map((r) => r.week)));
   };

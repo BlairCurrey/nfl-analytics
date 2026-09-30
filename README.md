@@ -58,6 +58,7 @@ Run `uv run nfl --help` for the full CLI reference.
 | `download [years]` | Just download raw play-by-play data.                                                            |
 | `train`            | Just train from already-downloaded data.                                                        |
 | `evaluate`         | Score the model against naive and Vegas baselines on held-out seasons (`--test-since`, default 2023). |
+| `backtest`         | Replay past weeks (default since 2021), training only on earlier games each week. Writes `backtest.csv`. |
 | `benchmark`        | Run the fixed backtest and check it against the committed `benchmark.json` (`--write` to update it). |
 | `run-pipeline`     | Full weekly pipeline used by the github action. Exits cleanly during the offseason.             |
 
@@ -90,6 +91,8 @@ The model that is actually published is trained on every season, with nothing he
 6. Sanity-checks the predictions: kickoffs in the next 8 days, no team playing twice, plausible spreads, and not unusually far from the Vegas lines on average.
 7. Grades previously published predictions against final scores and Vegas closing lines, and carries the full history forward in `ledger.csv`. Comparing the line at publish time with the closing line shows whether the market moved toward the model afterwards.
 8. Publishes an immutable release named `predictions-<season>-w<week>`, with checksums and build provenance attestations. An existing release is never replaced, so if Tuesday already published the week, Wednesday's retry does nothing.
+
+Each release also includes `backtest.csv`: what that week's model would have predicted for every week since 2021, training only on games before each week. These weren't published before kickoff, so they're kept out of the ledger, and the site always shows them separately.
 
 If any step fails, nothing is published and the workflow opens (or comments on) a `pipeline-failure` issue.
 

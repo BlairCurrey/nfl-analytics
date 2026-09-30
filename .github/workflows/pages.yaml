@@ -1,9 +1,10 @@
 name: Pages
 
-# Builds the GitHub Pages site from site/ plus the latest release's ledger and
-# manifest. Runs after each weekly predictions run, and when the site changes.
-# The data is bundled at build time because browsers can't fetch release
-# assets directly (GitHub's download redirects don't allow cross-origin reads).
+# Builds the GitHub Pages site from site/ plus the latest release's ledger,
+# backtest, and manifest. Runs after each weekly predictions run, and when the
+# site changes. The data is bundled at build time because browsers can't fetch
+# release assets directly (GitHub's download redirects don't allow
+# cross-origin reads).
 
 on:
   workflow_run:
@@ -49,7 +50,7 @@ jobs:
           fi
 
           assets=$(gh release view "$latest" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
-          for file in ledger.csv manifest.json; do
+          for file in ledger.csv backtest.csv manifest.json; do
             if grep -qx "$file" <<< "$assets"; then
               gh release download "$latest" --repo "$GITHUB_REPOSITORY" --pattern "$file" --dir site/data
             else
